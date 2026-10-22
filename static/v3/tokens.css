@@ -1,0 +1,215 @@
+/**
+ * AI7 Solaris — Konsol Operasional v3: "Ruang Kerja Armada"
+ * Design System Specification (Craftsmanship Redesign)
+ * 
+ * Aesthetic: Stealth Obsidian Slate Surfaces,
+ *            Layered Physical Depth & Hairline Specular Highlights,
+ *            Luminous Electric Azure/Cyan & Indigo Accents,
+ *            Crisp Geometry (8px/12px/16px/20px),
+ *            Strict 44px Mobile Touch Targets, WCAG 2.1 AA/AAA Compliant.
+ * 
+ * Lead Artisan: Iris (AI7 Luminary — UI/UX Artisan & Frontend Architect)
+ * Zero External Dependencies · Native CSS Variables · Zero Slop
+ */
+
+:root {
+  /* ==========================================================================
+     1. COLOR ARCHITECTURE — SURFACES (SCULPTED OBSIDIAN SLATE DEPTH)
+     Physical layered depth with calibrated brightness steps:
+     Canvas (#06080D) -> App Container (#090D16) -> Sidebar (#0C121E)
+     -> Card Surface (#0F1726) -> Well/Inset (#131D31) -> Field (#111A2A)
+     -> Elevated/Hover (#172238) -> Active/Pressed (#1C2A45)
+     ========================================================================== */
+  --surface-base: #06080D;           /* Deep canvas root & window background */
+  --surface-container: #090D16;      /* App container shell */
+  --surface-sidebar: #0C121E;        /* Sidebar navigation drawer */
+  --surface-card: #0F1726;           /* Primary dashboard cards & panels */
+  --surface-rail: #141D2E;           /* Topbar well & compact rail */
+  --surface-inset: #131D31;          /* Card inner, recessed well, code, grid rows */
+  --surface-field: #111A2A;          /* Form inputs, search fields, textareas */
+  --surface-elevated: #182236;       /* Drill-down modal sheets, popovers */
+  --surface-hover: #172238;          /* Interactive item hover state */
+  --surface-active: #1C2A45;         /* Pressed / active selection surface */
+
+  /* ==========================================================================
+     2. BRAND & ACCENT — LUMINOUS ELECTRIC AZURE/CYAN & INDIGO
+     Vibrant, tactile, and characterful accents over deep obsidian surfaces.
+     Zero generic muddy purple gradient slop.
+     ========================================================================== */
+  --primary-500: #38BDF8;            /* Primary focal accent (Electric Cyan / Sky 400) */
+  --primary-600: #0284C7;            /* Base boundary & active track (Sky 600) */
+  --primary-400: #38BDF8;            /* Core interactive accent */
+  --primary-300: #7DD3FC;            /* Subtle text highlight & glow ring (Sky 300) */
+  --primary-200: #BAE6FD;            /* Pristine high-contrast text highlight (Sky 200) */
+  
+  /* Luminary Cognitive & Orchestrator Accents */
+  --primary-indigo: #818CF8;         /* Cognitive Luminary rank & reasoning highlight */
+  --primary-indigo-core: #6366F1;    /* Deep indigo brand boundary */
+  --accent-glow: rgba(56, 189, 248, 0.16); /* Luminous crisp ambient glow */
+
+  /* Semantic Aliases for v3 App Compatibility */
+  --accent-cyan: #38BDF8;            /* Active pulse, live task highlight, focus ring */
+  --accent-cyan-core: #0284C7;       /* Primary interactive button & border accent */
+  --accent-cyan-bg: rgba(56, 189, 248, 0.12); /* Active pill well & selected indicator */
+  --accent-teal: #818CF8;            /* Topology handoff arrow, secondary relay */
+  --accent-teal-core: #6366F1;       /* Secondary interactive boundary */
+  --accent-teal-bg: rgba(99, 102, 241, 0.12); /* Handoff relay pill background well */
+
+  /* ==========================================================================
+     3. BORDERS & HAIRLINES (TACTILE SPECULAR EDGES)
+     ========================================================================== */
+  --border-subtle: rgba(255, 255, 255, 0.08); /* Structural hairline divider */
+  --border-card: rgba(255, 255, 255, 0.10);   /* Card outer contour */
+  --border-medium: #1E2C44;          /* Distinct card contours & panel dividers */
+  --border-strong: #2C3F60;          /* Interactive boundaries & active tab underline */
+  --border-dashed: #2C3F60;          /* Topology & placeholder boundaries */
+  --border-accent: rgba(56, 189, 248, 0.45);  /* Luminous cyan accent hairline */
+  --border-interactive: #2C3F60;      /* Unfocused inputs, copy buttons, toggle frames */
+  --border-focus: #38BDF8;            /* WCAG 2.1 focus-visible ring (>9.0:1 on card) */
+
+  /* ==========================================================================
+     4. TYPOGRAPHY HIERARCHY — TEXT COLORS (WCAG 2.1 AA/AAA)
+     High-contrast calibrated scales over deep obsidian midnight layers.
+     ========================================================================== */
+  --text-primary: #F8FAFC;           /* Headings, primary metrics, critical labels (>16:1 AAA) */
+  --text-secondary: #94A3B8;         /* Body text, timestamps, secondary parameters (>6.9:1 AA) */
+  --text-muted: #8494A7;             /* Meta keys, unit labels, table headers (>5.5:1 AA) */
+  --text-on-light: #06080D;          /* High contrast text on light pills/chips */
+  --text-disabled: #475569;          /* Disabled actions, empty state captions */
+
+  /* ==========================================================================
+     5. SEMANTIC STATUS SYSTEM (TRI-FOLD: TEXT + ICON + COLOR)
+     Tactile status pills with deep obsidian-tinted wells & subtle luminescent rims.
+     ========================================================================== */
+  /* Sukses / Nominal / Normal (Emerald Mint) */
+  --status-nominal-text: #34D399;    /* Emerald 400 (8.2:1 AAA on well, 9.3:1 on card) */
+  --status-nominal-bg: #072B20;      /* Deep obsidian-emerald well */
+  --status-nominal-border: rgba(52, 211, 153, 0.35);
+
+  /* In-Flight / Running (Electric Sky) */
+  --status-running-text: #38BDF8;    /* Electric Sky (8.2:1 AAA on well, 9.0:1 on card) */
+  --status-running-bg: #0C243E;      /* Deep obsidian-sky well */
+  --status-running-border: rgba(56, 189, 248, 0.40);
+
+  /* Anomali / Warning / Orphaned (Warm Amber) */
+  --status-warning-text: #FBBF24;    /* Warm Amber 400 (9.8:1 AAA on well, 10.7:1 on card) */
+  --status-warning-bg: #2B1D06;      /* Deep obsidian-amber well */
+  --status-warning-border: rgba(251, 191, 36, 0.35);
+
+  /* Critical / Action Required / Failed (Vivid Scarlet) */
+  --status-critical-text: #F87171;   /* Rose 400 (6.4:1 AA on well, 6.5:1 on card) */
+  --status-critical-bg: #2F0E13;     /* Deep obsidian-scarlet well */
+  --status-critical-border: rgba(248, 113, 113, 0.35);
+
+  /* Resolved / Closed (Slate Titanium) */
+  --status-resolved-text: #94A3B8;   /* Slate 400 (6.3:1 AA on well, 6.9:1 on card) */
+  --status-resolved-bg: #172132;     /* Slate-obsidian neutral well */
+  --status-resolved-border: rgba(148, 163, 184, 0.35);
+
+  /* ==========================================================================
+     6. TYPOGRAPHY SCALES & SYSTEM FONT STACKS (ZERO CDN DOWNLOADS)
+     ========================================================================== */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+
+  /* Font Size Scale (Strict modular ladder) */
+  --text-2xs: 11px;                  /* Micro badges, commit SHAs in tight slots, pill icons */
+  --text-xs: 12px;                   /* Secondary metadata, table headers, unit symbols */
+  --text-sm: 13px;                   /* Standard dense UI, code blocks, task intents */
+  --text-base: 14px;                 /* Primary body, input text, sidebar links */
+  --text-md: 15px;                   /* Emphasized metrics, section headers, card titles */
+  --text-lg: 18px;                   /* First-fold pulse status, primary modal headings */
+  --text-xl: 20px;                   /* Key numerical counters, incident banner */
+  --text-2xl: 24px;                  /* Executive summary counters */
+  --text-3xl: 30px;                  /* Hero fleet pulse header */
+
+  /* Line Heights */
+  --leading-none: 1.0;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* Font Weights */
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+
+  /* ==========================================================================
+     7. SPATIAL GEOMETRY & SPACING GRID (STRICT 4px/8px RHYTHM)
+     ========================================================================== */
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-28: 28px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+
+  /* ==========================================================================
+     8. BORDER RADII (PROPORTIONAL COMMAND CENTER GEOMETRY)
+     ========================================================================== */
+  --radius-xs: 4px;                  /* Micro tags, indicator pips */
+  --radius-sm: 6px;                  /* Code blocks, button frames, input boxes, filter chips */
+  --radius-md: 10px;                 /* Internal card wells, sub-items, vital cells */
+  --radius-lg: 14px;                 /* Primary dashboard cards, banners, panel frames */
+  --radius-xl: 20px;                 /* Main container, modal sheets, hero cards */
+  --radius-pill: 9999px;             /* Status chips, filter pills, counter tags */
+  --radius-full: 9999px;             /* Legacy alias for radius-pill */
+
+  /* ==========================================================================
+     9. ELEVATION & PHYSICAL DEPTH (TACTILE LAYERED SURFACES)
+     Layered ambient shadows paired with crisp top specular highlights.
+     Feels like precision instruments on a dark workbench.
+     ========================================================================== */
+  --shadow-none: none;
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.40), 0 8px 24px -4px rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.11);
+  --shadow-card-hover: 0 4px 12px 0 rgba(0, 0, 0, 0.50), 0 16px 36px -6px rgba(0, 0, 0, 0.60), inset 0 1px 0 0 rgba(255, 255, 255, 0.20), inset 0 0 0 1px rgba(56, 189, 248, 0.25);
+  --shadow-elevated: 0 8px 30px rgba(0, 0, 0, 0.50), inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+  --shadow-modal: 0 24px 64px -12px rgba(0, 0, 0, 0.85), inset 0 1px 0 0 rgba(255, 255, 255, 0.16);
+  --shadow-focus: 0 0 0 2px var(--surface-card), 0 0 0 4px var(--border-focus);
+
+  /* ==========================================================================
+     10. ERGONOMIC INTERACTION & TOUCH TARGETS (WCAG 2.5.5 / MOBILE FIRST)
+     ========================================================================== */
+  --target-touch-min: 44px;          /* Strict 44x44px minimum bounding box for touch targets */
+  --target-touch-compact: 36px;      /* Desktop pointer dense controls (padded to 44px on mobile) */
+
+  /* ==========================================================================
+     11. LAYOUT DIMENSIONS & BREAKPOINTS
+     ========================================================================== */
+  --layout-sidebar-width: 250px;     /* Desktop wide expanded sidebar */
+  --layout-sidebar-rail: 64px;       /* Desktop compact icon rail */
+  --layout-mobile-drawer: 280px;     /* Mobile slide-out drawer width */
+  --layout-header-height: 60px;      /* Top bar height (status, sync, hamburger) */
+  --layout-dock-height: 64px;        /* Mobile bottom thumb-dock navigation bar */
+  --layout-max-width: 1440px;        /* Desktop maximum content constraint */
+
+  /* ==========================================================================
+     12. MOTION, DURATION & TACTILE EASING (SWIFT & SUBTLE)
+     ========================================================================== */
+  --duration-instant: 50ms;          /* Press down, active tap feedback */
+  --duration-fast: 150ms;            /* Hover, button states, focus highlights */
+  --duration-normal: 250ms;          /* Accordion fold, drawer transition, tab swap */
+  --ease-tactile: cubic-bezier(0.16, 1, 0.3, 1); /* Snappy ergonomic release */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);   /* Standard smooth transition */
+}
+
+/* ==========================================================================
+   13. PREFERS-REDUCED-MOTION ACCESSIBILITY ENFORCEMENT (NF-06)
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+  }
+}

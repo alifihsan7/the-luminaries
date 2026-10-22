@@ -1,0 +1,48 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.log
+TASK-*.md
+.DS_Store
+
+# Bukti screenshot konsol v2 (disimpan lokal, bukan di repo)
+static/v2/_proof/
+
+# Runtime artifacts, symlinks, and transient telemetry
+current
+releases/
+verdicts/
+handoff/
+*.json
+!dispatcher/agents.yaml
+dispatcher/locks/
+dispatcher/tasks.jsonl
+ops/*.jsonl
+ops/*.state
+ops/*.json
+dispatcher/routing.jsonl
+
+# Personal ops scripts
+ops/personal/
+
+# Secrets and environment configs
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.sqlite
+*.sqlite3
+*.db
+
+# Media and visual test artifacts
+*.png
+*.jpg
+*.jpeg
+*.webp
+static/v3/_artifacts/
+static/v3/_tools/*.png
+
+# Internal operational docs
+docs/internal/

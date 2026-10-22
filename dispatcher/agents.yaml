@@ -1,0 +1,64 @@
+# AI7 Solaris Agent Registry (Source of Truth)
+# Digunakan oleh Dispatcher untuk validasi profil, toolsets, timeout, dan batas harian
+
+agents:
+  nexus:
+    profile: default
+    kind: orchestrator
+    toolsets: ["file", "clarify", "mcp"]
+    max_runtime_s: 300
+    max_runs_per_day: 200
+  zephyr:
+    profile: zephyr
+    kind: luminary
+    toolsets: ["terminal", "file", "code_execution"]
+    max_runtime_s: 3600
+    max_runs_per_day: 50
+  daemon:
+    profile: daemon
+    kind: luminary
+    toolsets: ["terminal", "file"]
+    max_runtime_s: 900
+    max_runs_per_day: 30
+  aegis:
+    profile: aegis
+    kind: luminary
+    toolsets: ["terminal", "file"]
+    max_runtime_s: 1800
+    max_runs_per_day: 30
+  nacht:
+    profile: nacht
+    kind: luminary
+    toolsets: ["web", "file"]
+    max_runtime_s: 900
+    max_runs_per_day: 50
+  chronos:
+    profile: chronos
+    kind: luminary
+    toolsets: ["file"]
+    max_runtime_s: 600
+    max_runs_per_day: 30
+  sage:
+    profile: sage
+    kind: luminary
+    toolsets: ["file", "web"]
+    max_runtime_s: 900
+    max_runs_per_day: 30
+  athena:
+    profile: athena
+    kind: luminary
+    toolsets: ["file", "web"]
+    max_runtime_s: 1800
+    max_runs_per_day: 30
+  iris:
+    profile: iris
+    kind: luminary
+    toolsets: ["terminal", "file", "web"]
+    max_runtime_s: 900
+    max_runs_per_day: 100
+  ariadne:
+    profile: ariadne
+    kind: luminary
+    toolsets: ["file"]
+    max_runtime_s: 900
+    max_runs_per_day: 50
