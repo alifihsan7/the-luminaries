@@ -467,8 +467,8 @@ def collect(scope: str = "fleet") -> dict:
             "errors": {
                 "last_at": _iso(err_ts),
                 "tail": err_tail,
-                "fatal": has_fatal_err,
-            },
+                "fatal": True,
+            } if has_fatal_err else None,
             "cron_jobs": _cron_count(pdir),
             "service": None,
             "extra_services": [],

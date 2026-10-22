@@ -1360,7 +1360,7 @@
           </div>
         </div>
 
-        ${agent.errors && (agent.errors.fatal || agent.errors.tail) ? `
+        ${agent.errors && agent.errors.fatal ? `
           <div class="agent-system-error-card">
             <div class="error-card-header">
               <span class="error-badge-live">System Log Error Recorded</span>

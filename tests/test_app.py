@@ -376,6 +376,40 @@ def test_collect_missing_log_graceful(tmp_path: Path):
         assert lum["status"] == "unknown"
         assert lum["running"] is False
         assert lum["last_active"] is None
+        assert lum["errors"] is None
+
+
+def test_collect_luminary_errors_handling(tmp_path: Path):
+    mock_profiles = tmp_path / "profiles"
+    for name, _, _ in LUMINARIES:
+        pdir = mock_profiles / name / "logs"
+        pdir.mkdir(parents=True)
+        (pdir / "agent.log").write_text("agent heartbeat")
+
+    # Zephyr has only warning in errors.log (false-alarm prevention)
+    zephyr_err = mock_profiles / "zephyr" / "logs" / "errors.log"
+    zephyr_err.write_text("2026-10-22 11:00:03,668 WARNING cli: harmless rmdir warning\n")
+
+    # Aegis has fatal error in errors.log
+    aegis_err = mock_profiles / "aegis" / "logs" / "errors.log"
+    aegis_err.write_text("2026-10-22 11:00:03,668 ERROR agent.runner: Critical runtime failure\n")
+
+    with patch("app.PROFILES", mock_profiles), \
+         patch("app._systemd", return_value={"unit": "hermes-gateway", "state": "active", "main_pid": 1234, "since": None, "restarts": None, "scope": "user"}), \
+         patch("app.running_profiles", return_value={}):
+        data = collect(scope="luminaries")
+
+    agent_map = {a["id"]: a for a in data["agents"]}
+    # Zephyr must NOT have errors attached (errors is None)
+    assert agent_map["zephyr"]["errors"] is None
+
+    # Sage (no errors.log) must NOT have errors attached (errors is None)
+    assert agent_map["sage"]["errors"] is None
+
+    # Aegis has genuine fatal error
+    assert agent_map["aegis"]["errors"] is not None
+    assert agent_map["aegis"]["errors"]["fatal"] is True
+    assert "Critical runtime failure" in agent_map["aegis"]["errors"]["tail"]
 
 
 # ---------------------------------------------------------------------------
