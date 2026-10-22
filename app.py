@@ -13,17 +13,21 @@ Status model (honest to how Luminaries actually run — on demand, not as daemon
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import json
 import os
 import re
+import secrets
 import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 
 HOME = Path.home()
@@ -139,6 +143,65 @@ def normalize_path(path_val: str | Path | None) -> str:
 
 
 app = FastAPI(title="AI7 Solaris", docs_url=None, redoc_url=None)
+security = HTTPBasic(realm="The Luminaries Sovereign Console", auto_error=False)
+
+
+def get_console_auth_credentials() -> tuple[str, str] | None:
+    """Read configured HTTP Basic Auth credentials from environment.
+
+    Returns (username, password) tuple if both are non-empty, otherwise None (auth disabled).
+    """
+    user = os.environ.get("CONSOLE_AUTH_USER", "").strip()
+    password = os.environ.get("CONSOLE_AUTH_PASS", "").strip()
+    if user and password:
+        return user, password
+    return None
+
+
+@app.middleware("http")
+async def console_basic_auth_middleware(request: Request, call_next):
+    """Enforce HTTP Basic Auth when CONSOLE_AUTH_USER and CONSOLE_AUTH_PASS are configured.
+
+    Exempts /health and /health/ for automated uptime checks.
+    """
+    creds = get_console_auth_credentials()
+    if creds is None:
+        return await call_next(request)
+
+    # Health check endpoints are exempt from auth
+    if request.url.path in ("/health", "/health/"):
+        return await call_next(request)
+
+    unauthorized_response = JSONResponse(
+        status_code=401,
+        content={"detail": "Unauthorized"},
+        headers={"WWW-Authenticate": 'Basic realm="The Luminaries Sovereign Console"'},
+    )
+
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        return unauthorized_response
+
+    scheme, _, param = auth_header.partition(" ")
+    if scheme.lower() != "basic" or not param:
+        return unauthorized_response
+
+    try:
+        decoded = base64.b64decode(param.strip()).decode("utf-8")
+        username, sep, password = decoded.partition(":")
+        if not sep:
+            return unauthorized_response
+    except (binascii.Error, UnicodeDecodeError, ValueError):
+        return unauthorized_response
+
+    expected_user, expected_pass = creds
+    user_ok = secrets.compare_digest(username.encode("utf-8"), expected_user.encode("utf-8"))
+    pass_ok = secrets.compare_digest(password.encode("utf-8"), expected_pass.encode("utf-8"))
+
+    if not (user_ok and pass_ok):
+        return unauthorized_response
+
+    return await call_next(request)
 
 
 def _iso(ts: float | None) -> str | None:

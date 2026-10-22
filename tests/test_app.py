@@ -1123,3 +1123,103 @@ async def test_endpoint_api_tasks_privacy_sanitization(tmp_path: Path):
             assert single_task["artifacts"] == ["handoff/zephyr/out/T-PRIVACY.out.md"]
             assert str(dummy_home) not in single_task["intent"]
             assert raw_path not in single_task["intent"]
+
+
+# ---------------------------------------------------------------------------
+# Sovereign Console HTTP Basic Authentication Tests
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_basic_auth_disabled_when_env_unset(monkeypatch):
+    """When CONSOLE_AUTH_USER and CONSOLE_AUTH_PASS are not configured, requests succeed without auth."""
+    monkeypatch.delenv("CONSOLE_AUTH_USER", raising=False)
+    monkeypatch.delenv("CONSOLE_AUTH_PASS", raising=False)
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        res_health = await client.get("/health")
+        assert res_health.status_code == 200
+
+        res_root = await client.get("/")
+        assert res_root.status_code in (200, 404)
+
+        res_api = await client.get("/api/status")
+        assert res_api.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_basic_auth_unauthorized_when_auth_enabled(monkeypatch):
+    """When credentials are configured, unauthenticated requests to protected routes return 401."""
+    monkeypatch.setenv("CONSOLE_AUTH_USER", "alif")
+    monkeypatch.setenv("CONSOLE_AUTH_PASS", "supersecret123")
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        # /health is exempt
+        res_health = await client.get("/health")
+        assert res_health.status_code == 200
+        assert res_health.json() == {"ok": True}
+
+        # Protected endpoints return 401 and challenge header
+        for endpoint in ["/", "/v3/", "/api/status", "/api/tasks"]:
+            res = await client.get(endpoint)
+            assert res.status_code == 401
+            assert res.headers.get("www-authenticate") == 'Basic realm="The Luminaries Sovereign Console"'
+            assert res.json() == {"detail": "Unauthorized"}
+
+
+@pytest.mark.asyncio
+async def test_basic_auth_invalid_credentials(monkeypatch):
+    """Requests with invalid credentials or malformed auth headers return 401."""
+    monkeypatch.setenv("CONSOLE_AUTH_USER", "alif")
+    monkeypatch.setenv("CONSOLE_AUTH_PASS", "supersecret123")
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        # 1. Wrong password
+        res_wrong_pw = await client.get("/api/status", auth=("alif", "wrongpassword"))
+        assert res_wrong_pw.status_code == 401
+        assert res_wrong_pw.headers.get("www-authenticate") == 'Basic realm="The Luminaries Sovereign Console"'
+
+        # 2. Wrong username
+        res_wrong_user = await client.get("/api/status", auth=("intruder", "supersecret123"))
+        assert res_wrong_user.status_code == 401
+
+        # 3. Non-Basic authorization scheme
+        res_bearer = await client.get("/api/status", headers={"Authorization": "Bearer some-token"})
+        assert res_bearer.status_code == 401
+
+        # 4. Malformed Base64
+        res_malformed_b64 = await client.get("/api/status", headers={"Authorization": "Basic !!!not-valid-b64!!!"})
+        assert res_malformed_b64.status_code == 401
+
+        # 5. Base64 without username:password separator
+        res_no_sep = await client.get("/api/status", headers={"Authorization": "Basic bm9zZXBhcmF0b3I="})
+        assert res_no_sep.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_basic_auth_valid_credentials(monkeypatch):
+    """Requests with valid credentials succeed on all endpoints."""
+    monkeypatch.setenv("CONSOLE_AUTH_USER", "alif")
+    monkeypatch.setenv("CONSOLE_AUTH_PASS", "supersecret123")
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        # Root endpoint
+        res_root = await client.get("/", auth=("alif", "supersecret123"))
+        assert res_root.status_code in (200, 404)
+
+        # Status endpoint
+        res_status = await client.get("/api/status", auth=("alif", "supersecret123"))
+        assert res_status.status_code == 200
+        assert res_status.json()["scope"] == "fleet"
+
+        # Tasks endpoint
+        res_tasks = await client.get("/api/tasks", auth=("alif", "supersecret123"))
+        assert res_tasks.status_code == 200
+        assert "tasks" in res_tasks.json()
+
+        # Mounted v3 console
+        res_v3 = await client.get("/v3/", auth=("alif", "supersecret123"))
+        assert res_v3.status_code == 200
