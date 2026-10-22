@@ -1097,12 +1097,38 @@ def health():
 
 @app.get("/")
 def index():
-    idx = STATIC / "v2" / "index.html"
-    if idx.exists():
-        return FileResponse(idx)
-    return JSONResponse({"service": "ai7-solaris", "hint": "static/v2/index.html not found", "api": "/api/status"}, status_code=404)
+    idx_v3 = STATIC / "v3" / "index.html"
+    if idx_v3.exists():
+        return FileResponse(idx_v3)
+    return JSONResponse(
+        {"service": "ai7-solaris", "hint": "static/v3/index.html not found", "api": "/api/status"},
+        status_code=404,
+    )
 
 
-app.mount("/v2", StaticFiles(directory=str(STATIC / "v2"), html=True), name="v2")
+@app.get("/tokens.css")
+def root_tokens_css():
+    target = STATIC / "v3" / "tokens.css"
+    if target.exists():
+        return FileResponse(target, media_type="text/css")
+    return JSONResponse({"error": "tokens.css not found"}, status_code=404)
+
+
+@app.get("/style.css")
+def root_style_css():
+    target = STATIC / "v3" / "style.css"
+    if target.exists():
+        return FileResponse(target, media_type="text/css")
+    return JSONResponse({"error": "style.css not found"}, status_code=404)
+
+
+@app.get("/app.js")
+def root_app_js():
+    target = STATIC / "v3" / "app.js"
+    if target.exists():
+        return FileResponse(target, media_type="application/javascript")
+    return JSONResponse({"error": "app.js not found"}, status_code=404)
+
+
 app.mount("/v3", StaticFiles(directory=str(STATIC / "v3"), html=True), name="v3")
 app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")

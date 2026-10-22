@@ -640,61 +640,77 @@ async def test_endpoint_index_serves_static_html():
         res = await client.get("/")
         assert res.status_code == 200
         assert "text/html" in res.headers.get("content-type", "")
-        # Verify root / delivers Iris's console v2
-        assert "<title>AI7 Solaris — Telemetri Armada</title>" in res.text
-        assert "Konsol Operasional Armada" in res.text
-        assert "Anomali &amp; Pengecualian" in res.text
-        assert "Matriks Armada (13 Entitas)" in res.text
-        assert "Aliran Task Dispatcher" in res.text
-        assert '<link rel="stylesheet" href="/static/v2/style.css">' in res.text
-        assert '<script src="/static/v2/app.js"></script>' in res.text
+        # Verify root / delivers Sovereign Console v3
+        assert ("<title>The Luminaries — Sovereign Console v3</title>" in res.text or "<title>AI7 Solaris — Constellation Workspace v3</title>" in res.text or "<title>AI7 Solaris — Ruang Kerja Armada</title>" in res.text)
+        assert ("The Luminaries" in res.text or "AI7 Solaris — Constellation Workspace v3" in res.text or "AI7 Solaris — Ruang Kerja Armada" in res.text or "CONSOLE v3" in res.text)
+        assert ("CONSOLE v3" in res.text or "KONSOL v3" in res.text)
+        assert "THE LUMINARIES" in res.text
+        assert 'id="luminaries-container"' in res.text
+        assert 'id="agent-detail-modal"' in res.text
+        assert 'id="realtime-clock-display"' in res.text
 
-        # Verify static assets linked from console v2 resolve cleanly
-        res_css = await client.get("/static/v2/style.css")
+        # Verify static assets linked from console v3 resolve cleanly at root
+        res_tokens = await client.get("/tokens.css")
+        assert res_tokens.status_code == 200
+        assert len(res_tokens.text) > 0
+
+        res_css = await client.get("/style.css")
         assert res_css.status_code == 200
         assert len(res_css.text) > 0
 
-        res_js = await client.get("/static/v2/app.js")
+        res_js = await client.get("/app.js")
         assert res_js.status_code == 200
         assert len(res_js.text) > 0
 
 
 @pytest.mark.asyncio
-async def test_endpoint_v2_serves_console_v2_html():
+async def test_endpoint_index_serves_v3_or_404_when_missing(tmp_path: Path):
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        # 1. Clean path /v2/ returns 200 and serves v2 console
-        res = await client.get("/v2/")
-        assert res.status_code == 200
-        assert "text/html" in res.headers.get("content-type", "")
-        # Check text markers specific to Iris's v2 console
-        assert "<title>AI7 Solaris — Telemetri Armada</title>" in res.text
-        assert "Konsol Operasional Armada" in res.text
-        assert "Anomali &amp; Pengecualian" in res.text
-        assert "Matriks Armada (13 Entitas)" in res.text
-        assert "Aliran Task Dispatcher" in res.text
-        assert '<link rel="stylesheet" href="/static/v2/style.css">' in res.text
-        assert '<script src="/static/v2/app.js"></script>' in res.text
+        with patch("app.STATIC", tmp_path):
+            # 1. v3 index does not exist -> 404
+            res_404 = await client.get("/")
+            assert res_404.status_code == 404
+            assert res_404.json()["hint"] == "static/v3/index.html not found"
 
-        # 2. Check assets resolve under /v2 mount
+            # 2. Legacy v2 directory exists only -> still 404 (zero v2 fallback)
+            v2_dir = tmp_path / "v2"
+            v2_dir.mkdir(parents=True)
+            (v2_dir / "index.html").write_text("<title>Legacy v2</title>", encoding="utf-8")
+            res_still_404 = await client.get("/")
+            assert res_still_404.status_code == 404
+            assert res_still_404.json()["hint"] == "static/v3/index.html not found"
+
+            # 3. v3 exists -> serves v3
+            v3_dir = tmp_path / "v3"
+            v3_dir.mkdir(parents=True)
+            (v3_dir / "index.html").write_text("<title>Priority v3 Console</title>", encoding="utf-8")
+            res_v3 = await client.get("/")
+            assert res_v3.status_code == 200
+            assert "<title>Priority v3 Console</title>" in res_v3.text
+
+
+@pytest.mark.asyncio
+async def test_endpoint_v2_deprecated_returns_404():
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        # Legacy v2 mount and assets are completely removed; returns 404
+        res = await client.get("/v2/")
+        assert res.status_code == 404
+
         res_css = await client.get("/v2/style.css")
-        assert res_css.status_code == 200
-        assert len(res_css.text) > 0
+        assert res_css.status_code == 404
 
         res_js = await client.get("/v2/app.js")
-        assert res_js.status_code == 200
-        assert len(res_js.text) > 0
+        assert res_js.status_code == 404
 
-        # 3. Path /v2 without trailing slash redirects cleanly to /v2/
         res_redir = await client.get("/v2", follow_redirects=True)
-        assert res_redir.status_code == 200
-        assert "Konsol Operasional Armada" in res_redir.text
+        assert res_redir.status_code == 404
 
-        # 4. Invariant: Root / also serves console v2, replacing legacy 3D dashboard
+        # Invariant: Root / strictly serves v3
         res_root = await client.get("/")
         assert res_root.status_code == 200
-        assert "<title>AI7 Solaris — Telemetri Armada</title>" in res_root.text
-        assert "Konsol Operasional Armada" in res_root.text
+        assert ("<title>The Luminaries — Sovereign Console v3</title>" in res_root.text or "THE LUMINARIES" in res_root.text)
 
 
 @pytest.mark.asyncio
@@ -737,14 +753,13 @@ async def test_endpoint_v3_serves_console_v3_html():
         assert ("<title>The Luminaries — Sovereign Console v3</title>" in res_redir.text or "<title>AI7 Solaris — Constellation Workspace v3</title>" in res_redir.text or "<title>AI7 Solaris — Ruang Kerja Armada</title>" in res_redir.text)
         assert ("The Luminaries" in res_redir.text or "AI7 Solaris — Constellation Workspace v3" in res_redir.text or "AI7 Solaris — Ruang Kerja Armada" in res_redir.text or "CONSOLE v3" in res_redir.text)
 
-        # 4. Invariant: Production console v2 at / and /v2/ remains untouched
+        # 4. Invariant: Root / serves v3 and legacy /v2/ returns 404
         res_root = await client.get("/")
         assert res_root.status_code == 200
-        assert "<title>AI7 Solaris — Telemetri Armada</title>" in res_root.text
+        assert ("<title>The Luminaries — Sovereign Console v3</title>" in res_root.text or "THE LUMINARIES" in res_root.text)
 
         res_v2 = await client.get("/v2/")
-        assert res_v2.status_code == 200
-        assert "<title>AI7 Solaris — Telemetri Armada</title>" in res_v2.text
+        assert res_v2.status_code == 404
 
 
 def test_endpoint_v3_with_testclient():
@@ -767,6 +782,11 @@ def test_endpoint_v3_with_testclient():
         assert res_redir.status_code == 200
         assert ("<title>The Luminaries — Sovereign Console v3</title>" in res_redir.text or "<title>AI7 Solaris — Constellation Workspace v3</title>" in res_redir.text or "<title>AI7 Solaris — Ruang Kerja Armada</title>" in res_redir.text)
         assert ("The Luminaries" in res_redir.text or "AI7 Solaris — Constellation Workspace v3" in res_redir.text or "AI7 Solaris — Ruang Kerja Armada" in res_redir.text or "CONSOLE v3" in res_redir.text)
+
+        # 3. Path / also serves v3 console
+        res_root = client.get("/")
+        assert res_root.status_code == 200
+        assert ("<title>The Luminaries — Sovereign Console v3</title>" in res_root.text or "THE LUMINARIES" in res_root.text)
 
 
 
