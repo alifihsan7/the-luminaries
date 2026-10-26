@@ -15,6 +15,7 @@ import httpx
 import pytest
 
 from app import (
+    CRITICAL_SERVICES,
     IDLE_SEC,
     LUMINARIES,
     RECENT_SEC,
@@ -28,6 +29,7 @@ from app import (
     _systemd,
     app,
     collect,
+    collect_vps_telemetry,
     derive_status,
     derive_tasks,
     running_profiles,
@@ -303,6 +305,7 @@ def test_collect_fleet_all_thirteen_entities(tmp_path: Path):
 
     nexus = data["agents"][0]
     assert nexus["id"] == "nexus"
+    assert nexus["name"] == "Spidey"
     assert nexus["kind"] == "orchestrator"
     assert nexus["service"] is not None
 
@@ -674,6 +677,9 @@ async def test_endpoint_index_serves_static_html():
         res = await client.get("/")
         assert res.status_code == 200
         assert "text/html" in res.headers.get("content-type", "")
+        assert res.headers.get("cache-control") == "no-cache, no-store, must-revalidate"
+        assert res.headers.get("pragma") == "no-cache"
+        assert res.headers.get("expires") == "0"
         # Verify root / delivers Sovereign Console v3
         assert ("<title>The Luminaries — Sovereign Console v3</title>" in res.text or "<title>AI7 Solaris — Constellation Workspace v3</title>" in res.text or "<title>AI7 Solaris — Ruang Kerja Armada</title>" in res.text)
         assert ("The Luminaries" in res.text or "AI7 Solaris — Constellation Workspace v3" in res.text or "AI7 Solaris — Ruang Kerja Armada" in res.text or "CONSOLE v3" in res.text)
@@ -686,14 +692,17 @@ async def test_endpoint_index_serves_static_html():
         # Verify static assets linked from console v3 resolve cleanly at root
         res_tokens = await client.get("/tokens.css")
         assert res_tokens.status_code == 200
+        assert res_tokens.headers.get("cache-control") == "no-cache, no-store, must-revalidate"
         assert len(res_tokens.text) > 0
 
         res_css = await client.get("/style.css")
         assert res_css.status_code == 200
+        assert res_css.headers.get("cache-control") == "no-cache, no-store, must-revalidate"
         assert len(res_css.text) > 0
 
         res_js = await client.get("/app.js")
         assert res_js.status_code == 200
+        assert res_js.headers.get("cache-control") == "no-cache, no-store, must-revalidate"
         assert len(res_js.text) > 0
 
 
@@ -1161,7 +1170,7 @@ async def test_basic_auth_unauthorized_when_auth_enabled(monkeypatch):
         assert res_health.json() == {"ok": True}
 
         # Protected endpoints return 401 and challenge header
-        for endpoint in ["/", "/v3/", "/api/status", "/api/tasks"]:
+        for endpoint in ["/", "/v3/", "/api/status", "/api/tasks", "/api/vps"]:
             res = await client.get(endpoint)
             assert res.status_code == 401
             assert res.headers.get("www-authenticate") == 'Basic realm="The Luminaries Sovereign Console"'
@@ -1223,3 +1232,131 @@ async def test_basic_auth_valid_credentials(monkeypatch):
         # Mounted v3 console
         res_v3 = await client.get("/v3/", auth=("alif", "supersecret123"))
         assert res_v3.status_code == 200
+
+        # VPS endpoint
+        res_vps = await client.get("/api/vps", auth=("alif", "supersecret123"))
+        assert res_vps.status_code == 200
+        assert "host" in res_vps.json()
+
+
+# ---------------------------------------------------------------------------
+# Unit tests: /api/vps Endpoint & VPS Telemetry
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_endpoint_api_vps_success():
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.get("/api/vps")
+        assert res.status_code == 200
+        body = res.json()
+
+        # Success criteria 1 & 3: root keys
+        for key in ("host", "cpu", "memory", "disk", "services"):
+            assert key in body, f"Missing root key: {key}"
+        assert "generated_at" in body
+
+        # Host schema
+        host = body["host"]
+        assert isinstance(host["hostname"], str) and len(host["hostname"]) > 0
+        assert isinstance(host["uptime_seconds"], (int, float)) and host["uptime_seconds"] >= 0
+        assert isinstance(host["os"], str) and len(host["os"]) > 0
+        assert isinstance(host["kernel"], str) and len(host["kernel"]) > 0
+
+        # CPU schema
+        cpu = body["cpu"]
+        assert isinstance(cpu["load_1m"], (int, float)) and cpu["load_1m"] >= 0
+        assert isinstance(cpu["load_5m"], (int, float)) and cpu["load_5m"] >= 0
+        assert isinstance(cpu["load_15m"], (int, float)) and cpu["load_15m"] >= 0
+        assert isinstance(cpu["cores"], int) and cpu["cores"] >= 1
+        assert isinstance(cpu["usage_pct"], (int, float)) and cpu["usage_pct"] >= 0
+
+        # Memory schema
+        mem = body["memory"]
+        assert isinstance(mem["total_bytes"], int) and mem["total_bytes"] >= 0
+        assert isinstance(mem["used_bytes"], int) and mem["used_bytes"] >= 0
+        assert isinstance(mem["free_bytes"], int) and mem["free_bytes"] >= 0
+        assert isinstance(mem["available_bytes"], int) and mem["available_bytes"] >= 0
+        assert isinstance(mem["usage_pct"], (int, float)) and 0 <= mem["usage_pct"] <= 100
+
+        # Disk schema
+        disk = body["disk"]
+        assert disk["path"] == "/"
+        assert isinstance(disk["total_bytes"], int) and disk["total_bytes"] >= 0
+        assert isinstance(disk["used_bytes"], int) and disk["used_bytes"] >= 0
+        assert isinstance(disk["free_bytes"], int) and disk["free_bytes"] >= 0
+        assert isinstance(disk["usage_pct"], (int, float)) and 0 <= disk["usage_pct"] <= 100
+        assert isinstance(disk["is_warning"], bool)
+
+        # Services schema
+        services = body["services"]
+        assert isinstance(services, list)
+        assert len(services) == len(CRITICAL_SERVICES)
+        service_names = [s["name"] for s in services]
+        for expected_svc in CRITICAL_SERVICES:
+            assert expected_svc in service_names
+
+        for s in services:
+            assert "name" in s
+            assert "unit" in s
+            assert "state" in s
+            assert "status" in s
+            assert "active" in s
+            assert isinstance(s["active"], bool)
+
+
+@pytest.mark.asyncio
+async def test_endpoint_api_vps_disk_warning_logic():
+    from collections import namedtuple
+    Usage = namedtuple("Usage", ["total", "used", "free"])
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        # Case 1: usage > 85% -> is_warning is True
+        with patch("shutil.disk_usage", return_value=Usage(total=100_000, used=86_000, free=14_000)):
+            res = await client.get("/api/vps")
+            assert res.status_code == 200
+            disk = res.json()["disk"]
+            assert disk["usage_pct"] == 86.0
+            assert disk["is_warning"] is True
+
+        # Case 2: usage <= 85% -> is_warning is False
+        with patch("shutil.disk_usage", return_value=Usage(total=100_000, used=85_000, free=15_000)):
+            res = await client.get("/api/vps")
+            assert res.status_code == 200
+            disk = res.json()["disk"]
+            assert disk["usage_pct"] == 85.0
+            assert disk["is_warning"] is False
+
+        # Case 3: low usage -> is_warning is False
+        with patch("shutil.disk_usage", return_value=Usage(total=100_000, used=30_000, free=70_000)):
+            res = await client.get("/api/vps")
+            assert res.status_code == 200
+            disk = res.json()["disk"]
+            assert disk["usage_pct"] == 30.0
+            assert disk["is_warning"] is False
+
+
+@pytest.mark.asyncio
+async def test_endpoint_api_vps_error_handling():
+    with patch("app.collect_vps_telemetry", side_effect=RuntimeError("telemetry collection failed")):
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            res = await client.get("/api/vps")
+            assert res.status_code == 500
+            body = res.json()
+            assert "error" in body
+            assert "telemetry collection failed" in body["error"]
+            assert "generated_at" in body
+
+
+def test_collect_vps_telemetry_calculations():
+    with patch("os.getloadavg", return_value=(2.0, 1.5, 1.0)), patch("os.cpu_count", return_value=4):
+        from app import _get_cpu_info
+        cpu_data = _get_cpu_info()
+        assert cpu_data["load_1m"] == 2.0
+        assert cpu_data["cores"] == 4
+        assert cpu_data["usage_pct"] == 50.0
+
+    data = collect_vps_telemetry()
+    assert all(k in data for k in ("generated_at", "host", "cpu", "memory", "disk", "services"))

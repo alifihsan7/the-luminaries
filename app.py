@@ -17,8 +17,11 @@ import base64
 import binascii
 import json
 import os
+import platform
 import re
 import secrets
+import shutil
+import socket
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -63,8 +66,18 @@ SATELLITES = [
     ("sentinel", "System radar & email briefing", "IMAP live email radar & morning/night briefs", "ai7-email-live.service", []),
 ]
 
+CRITICAL_SERVICES = [
+    "postgresql",
+    "9router",
+    "hermes-gateway",
+    "ai7-whisper",
+    "ai7-finance",
+    "ai7-warden",
+    "ai7-email-live",
+]
+
 AGENT_META: dict[str, dict[str, str]] = {
-    "nexus": {"name": "Nexus", "role": "Orchestrator"},
+    "nexus": {"name": "Spidey", "role": "Sovereign Orchestrator"},
     **{name: {"name": name.capitalize(), "role": role} for name, role, _ in LUMINARIES},
     **{name: {"name": name.capitalize(), "role": role} for name, role, _, _, *rest in SATELLITES},
 }
@@ -488,8 +501,8 @@ def collect(scope: str = "fleet") -> dict:
 
     agents = [{
         "id": "nexus",
-        "name": "Nexus",
-        "role": "Orchestrator",
+        "name": "Spidey",
+        "role": "Sovereign Orchestrator",
         "desc": "Single entry point, delegation, coordination",
         "kind": "orchestrator",
         "status": "running" if gateway_ok else "error",
@@ -599,6 +612,158 @@ def collect(scope: str = "fleet") -> dict:
         "scope": scope,
         "count": len(agents),
         "agents": agents,
+    }
+
+
+def _get_uptime_seconds() -> float:
+    try:
+        with open("/proc/uptime", "r", encoding="utf-8") as f:
+            line = f.readline()
+            if line:
+                parts = line.split()
+                if parts:
+                    return round(float(parts[0]), 1)
+    except (OSError, ValueError, IndexError):
+        pass
+    return 0.0
+
+
+def _get_os_info() -> str:
+    try:
+        if hasattr(platform, "freedesktop_os_release"):
+            data = platform.freedesktop_os_release()
+            if "PRETTY_NAME" in data and data["PRETTY_NAME"]:
+                return str(data["PRETTY_NAME"])
+            if "NAME" in data and data["NAME"]:
+                return str(data["NAME"])
+    except (OSError, AttributeError):
+        pass
+    os_name = platform.system()
+    kernel_release = platform.release()
+    return f"{os_name} {kernel_release}".strip() if os_name else "Linux"
+
+
+def _get_cpu_info() -> dict[str, Any]:
+    try:
+        load = os.getloadavg()
+    except (AttributeError, OSError):
+        load = (0.0, 0.0, 0.0)
+    cores = os.cpu_count() or 1
+    usage_pct = round((load[0] / cores) * 100, 1)
+    return {
+        "load_1m": round(load[0], 2),
+        "load_5m": round(load[1], 2),
+        "load_15m": round(load[2], 2),
+        "cores": cores,
+        "usage_pct": usage_pct,
+    }
+
+
+def _get_memory_info() -> dict[str, Any]:
+    total_bytes = 0
+    free_bytes = 0
+    available_bytes = 0
+    try:
+        with open("/proc/meminfo", "r", encoding="utf-8") as f:
+            for line in f:
+                if ":" not in line:
+                    continue
+                k, v = line.split(":", 1)
+                k = k.strip()
+                num_part = v.strip().split()[0]
+                if num_part.isdigit():
+                    b = int(num_part) * 1024
+                    if k == "MemTotal":
+                        total_bytes = b
+                    elif k == "MemFree":
+                        free_bytes = b
+                    elif k == "MemAvailable":
+                        available_bytes = b
+    except (OSError, ValueError):
+        pass
+
+    if total_bytes == 0:
+        try:
+            pages = os.sysconf("SC_PHYS_PAGES")
+            page_size = os.sysconf("SC_PAGE_SIZE")
+            total_bytes = pages * page_size
+            available_bytes = total_bytes
+            free_bytes = total_bytes
+        except (AttributeError, ValueError, OSError):
+            pass
+
+    if available_bytes == 0 and free_bytes > 0:
+        available_bytes = free_bytes
+
+    used_bytes = max(0, total_bytes - available_bytes)
+    usage_pct = round((used_bytes / total_bytes) * 100, 1) if total_bytes > 0 else 0.0
+
+    return {
+        "total_bytes": total_bytes,
+        "used_bytes": used_bytes,
+        "free_bytes": free_bytes,
+        "available_bytes": available_bytes,
+        "usage_pct": usage_pct,
+    }
+
+
+def _get_disk_info(path: str = "/") -> dict[str, Any]:
+    try:
+        du = shutil.disk_usage(path)
+        total_bytes = du.total
+        used_bytes = du.used
+        free_bytes = du.free
+        usage_pct = round((used_bytes / total_bytes) * 100, 1) if total_bytes > 0 else 0.0
+    except OSError:
+        total_bytes = 0
+        used_bytes = 0
+        free_bytes = 0
+        usage_pct = 0.0
+
+    return {
+        "path": path,
+        "total_bytes": total_bytes,
+        "used_bytes": used_bytes,
+        "free_bytes": free_bytes,
+        "usage_pct": usage_pct,
+        "is_warning": usage_pct > 85.0,
+    }
+
+
+def _get_critical_services() -> list[dict[str, Any]]:
+    services = []
+    for svc_name in CRITICAL_SERVICES:
+        svc = _systemd(svc_name)
+        state = svc.get("state", "unknown")
+        services.append({
+            "name": svc_name,
+            "unit": svc.get("unit", svc_name),
+            "state": state,
+            "status": state,
+            "active": state == "active",
+            "scope": svc.get("scope"),
+            "since": svc.get("since"),
+            "restarts": svc.get("restarts"),
+            "main_pid": svc.get("main_pid"),
+        })
+    return services
+
+
+def collect_vps_telemetry() -> dict[str, Any]:
+    """Collect real-time Linux VPS host telemetry and critical service statuses."""
+    now_ts = time.time()
+    return {
+        "generated_at": _iso(now_ts),
+        "host": {
+            "hostname": socket.gethostname(),
+            "uptime_seconds": _get_uptime_seconds(),
+            "os": _get_os_info(),
+            "kernel": platform.release(),
+        },
+        "cpu": _get_cpu_info(),
+        "memory": _get_memory_info(),
+        "disk": _get_disk_info("/"),
+        "services": _get_critical_services(),
     }
 
 
@@ -1153,16 +1318,31 @@ def get_relations(days: float | None = Query(default=None, gt=0)):
         return JSONResponse({"error": str(exc), "generated_at": _iso(time.time())}, status_code=500)
 
 
+@app.get("/api/vps")
+def get_vps():
+    try:
+        return JSONResponse(collect_vps_telemetry())
+    except Exception as exc:
+        return JSONResponse({"error": str(exc), "generated_at": _iso(time.time())}, status_code=500)
+
+
 @app.get("/health")
 def health():
     return {"ok": True}
+
+
+NO_CACHE_HEADERS: dict[str, str] = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
 
 
 @app.get("/")
 def index():
     idx_v3 = STATIC / "v3" / "index.html"
     if idx_v3.exists():
-        return FileResponse(idx_v3)
+        return FileResponse(idx_v3, headers=NO_CACHE_HEADERS)
     return JSONResponse(
         {"service": "ai7-solaris", "hint": "static/v3/index.html not found", "api": "/api/status"},
         status_code=404,
@@ -1173,7 +1353,7 @@ def index():
 def root_tokens_css():
     target = STATIC / "v3" / "tokens.css"
     if target.exists():
-        return FileResponse(target, media_type="text/css")
+        return FileResponse(target, media_type="text/css", headers=NO_CACHE_HEADERS)
     return JSONResponse({"error": "tokens.css not found"}, status_code=404)
 
 
@@ -1181,7 +1361,7 @@ def root_tokens_css():
 def root_style_css():
     target = STATIC / "v3" / "style.css"
     if target.exists():
-        return FileResponse(target, media_type="text/css")
+        return FileResponse(target, media_type="text/css", headers=NO_CACHE_HEADERS)
     return JSONResponse({"error": "style.css not found"}, status_code=404)
 
 
@@ -1189,7 +1369,7 @@ def root_style_css():
 def root_app_js():
     target = STATIC / "v3" / "app.js"
     if target.exists():
-        return FileResponse(target, media_type="application/javascript")
+        return FileResponse(target, media_type="application/javascript", headers=NO_CACHE_HEADERS)
     return JSONResponse({"error": "app.js not found"}, status_code=404)
 
 

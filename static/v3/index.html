@@ -1,458 +1,787 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
-  <meta name="theme-color" content="#070a0e">
-  <meta name="description" content="The Luminaries — Sovereign Operational Console v3: 10 Autonomous Reasoning Entities">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Luminaries — Sovereign Console v3</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23070a0e%22/><circle cx=%2250%22 cy=%2250%22 r=%2232%22 fill=%22none%22 stroke=%22%2338cadf%22 stroke-width=%228%22/><path d=%22M50 25 L50 75 M25 50 L75 50%22 stroke=%22%2338cadf%22 stroke-width=%228%22 stroke-linecap=%22round%22/></svg>">
-  <link rel="stylesheet" href="tokens.css">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div id="sr-announcements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-  <div class="app-layout">
-    <!-- SIDEBAR NAV (F-01) -->
-    <aside class="sidebar" id="app-sidebar" aria-label="Main Navigation">
-      <div class="sidebar-header">
-        <a href="#/overview" class="brand">
-          <div class="brand-icon" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300..700;1,300..700&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <!-- Design System Tokens & Anti-Slop Styles -->
+  <link rel="stylesheet" href="tokens.css?v=20261025-neural-canvas-v2">
+  <link rel="stylesheet" href="style.css?v=20261025-neural-canvas-v2">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            surface: {
+              DEFAULT: '#0f131c',
+              lowest: '#0a0e17',
+              low: '#181b25',
+              container: '#1c1f29',
+              high: '#262a34',
+              highest: '#31353f',
+            },
+            primary: {
+              DEFAULT: '#c0c1ff',
+              container: '#8083ff',
+            },
+            secondary: '#d0bcff',
+            tertiary: '#4cd7f6',
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0f131c] text-[#f4f4f8] font-sans antialiased selection:bg-[#8083ff]/30 selection:text-white">
+
+  <!-- Mobile Sidebar Backdrop Overlay -->
+  <div id="sidebar-backdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden transition-opacity lg:hidden" aria-hidden="true"></div>
+
+  <!-- MAIN WRAPPER: Responsive Drawer Sidebar + Fluid Stage -->
+  <div class="flex min-h-screen">
+
+    <!-- 1. SOVEREIGN SIDEBAR (OFF-CANVAS DRAWER ON MOBILE/TABLET, FIXED ON DESKTOP) -->
+    <aside id="sovereign-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-[#0a0e17] border-r border-[#262a34]/80 flex flex-col -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out" aria-label="Sovereign Navigation">
+      <!-- Sidebar Header -->
+      <div class="px-5 py-4 border-b border-[#262a34]/70 flex flex-col gap-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-mono tracking-wider text-[#8083ff] font-semibold uppercase">CONSOLE v3</span>
+          <div class="flex items-center gap-1.5">
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#4ade80]/10 text-[#4ade80] border border-[#4ade80]/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse"></span>
+              v3.0.0-live
+            </span>
+            <button type="button" id="sidebar-close-btn" class="p-1 rounded text-slate-400 hover:text-white hover:bg-[#262a34] block lg:hidden transition" aria-label="Close navigation sidebar">
+              <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
           </div>
-          <div class="brand-info">
-            <span class="brand-title">THE LUMINARIES</span>
-            <span class="brand-badge">SOVEREIGN CONSOLE v3</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#c0c1ff] text-[22px]">hub</span>
+          <div>
+            <h1 class="text-sm font-bold tracking-tight text-white leading-tight">THE LUMINARIES</h1>
+            <p class="text-[11px] text-slate-400 font-mono">Spidey Orchestrator</p>
           </div>
-        </a>
+        </div>
       </div>
 
-      <nav class="sidebar-nav">
-        <button type="button" class="nav-item active" data-nav="overview" id="nav-btn-overview">
-          <span class="nav-icon" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-          </span>
-          <span class="nav-text">Constellation Overview</span>
+      <!-- Operations Navigation -->
+      <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" aria-label="Console Navigation Links">
+        <div class="px-3 pb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-400">Operations</div>
+        
+        <button type="button" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-medium text-[#c0c1ff] bg-[#1c1f29] ring-1 ring-[#8083ff]/30 transition-all" data-view="overview" data-nav="overview" id="nav-btn-overview">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[18px]">adjust</span>
+            <span>Overview / Canvas</span>
+          </div>
+          <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#0a0e17] text-[#4cd7f6] border border-[#262a34]">10/10</span>
         </button>
 
-        <button type="button" class="nav-item" data-nav="incidents" id="nav-btn-incidents">
-          <span class="nav-icon" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-          </span>
-          <span class="nav-text">Incidents &amp; Anomalies</span>
-          <span class="nav-badge badge-alert mono tabular" id="sidebar-incident-count">0</span>
+        <button type="button" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-[#181b25] transition-all" data-view="roster" data-nav="roster" id="nav-btn-roster">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[18px]">group</span>
+            <span>Fleet Roster</span>
+          </div>
+          <span class="text-[10px] font-mono text-slate-400" id="nav-roster-count">10 Nodes</span>
         </button>
 
-        <button type="button" class="nav-item" data-nav="topology" id="nav-btn-topology">
-          <span class="nav-icon" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-          </span>
-          <span class="nav-text">Topology &amp; Handoffs</span>
+        <button type="button" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-[#181b25] transition-all" data-view="telemetry" data-nav="telemetry" id="nav-btn-telemetry">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[18px]">insights</span>
+            <span>Telemetry</span>
+          </div>
+          <span class="text-[10px] font-mono text-[#4ade80]" id="nav-telem-health">100%</span>
         </button>
 
-        <button type="button" class="nav-item" data-nav="stream" id="nav-btn-stream">
-          <span class="nav-icon" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-          </span>
-          <span class="nav-text">Task Stream &amp; Audit</span>
-          <span class="nav-badge mono tabular" id="sidebar-task-count">0</span>
+        <button type="button" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-[#181b25] transition-all" data-view="vps" data-nav="vps" id="nav-btn-vps">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[18px]">dns</span>
+            <span>VPS Telemetry / SRE</span>
+          </div>
+          <span class="text-[10px] font-mono text-[#4ade80]" id="nav-vps-status">Host</span>
+        </button>
+
+        <button type="button" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-[#181b25] transition-all" data-view="stream" data-nav="stream" id="nav-btn-stream">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+            <span>Execution Logs</span>
+          </div>
+          <span class="text-[10px] font-mono text-slate-400" id="nav-tasks-count">Live</span>
+        </button>
+
+        <button type="button" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-[#181b25] transition-all" data-view="incidents" data-nav="incidents" id="nav-btn-incidents">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[18px]">warning</span>
+            <span>Incidents</span>
+          </div>
+          <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#0a0e17] text-[#4ade80] border border-[#262a34]" id="nav-incident-badge">0 Live</span>
+        </button>
+
+        <div class="pt-4 px-3 pb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-400">Topology</div>
+        <button type="button" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-[#181b25] transition-all" data-view="topology" data-nav="topology" id="nav-btn-topology">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[18px]">schema</span>
+            <span>Neural Handoffs</span>
+          </div>
         </button>
       </nav>
 
-      <div class="sidebar-footer">
-        <div class="telemetry-controls">
-          <button type="button" class="btn btn-sm btn-ghost" id="polling-toggle-btn" title="Pause or resume automatic telemetry polling">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="polling-icon"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-            <span id="polling-btn-text">Pause Polling</span>
-          </button>
-          <button type="button" class="btn btn-sm btn-ghost" id="manual-refresh-btn" title="Instant telemetry synchronization">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
-            <span>Sync Now</span>
-          </button>
+      <!-- Sidebar Footer Telemetry -->
+      <div class="p-3.5 border-t border-[#262a34]/70 bg-[#0a0e17] flex flex-col gap-2">
+        <div class="flex items-center justify-between text-[11px] font-mono">
+          <span class="text-slate-400">Health Telemetry</span>
+          <span class="text-[#4ade80] font-semibold">100.0% Nominal</span>
         </div>
-        <div class="version-meta">
-          <span>v3.0.0 · Read-Only</span>
+        <div class="w-full bg-[#1c1f29] h-1.5 rounded-full overflow-hidden">
+          <div class="bg-gradient-to-r from-[#8083ff] to-[#4cd7f6] h-full w-full"></div>
+        </div>
+        <div class="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1">
+          <span>Port 8082</span>
+          <span class="text-[#c0c1ff]">Online · Sovereign</span>
         </div>
       </div>
     </aside>
 
-    <!-- MAIN WRAPPER -->
-    <div class="main-wrapper">
-      <!-- TOPBAR -->
-      <header class="topbar">
-        <div class="topbar-left">
-          <button type="button" class="mobile-menu-btn" id="mobile-drawer-toggle" aria-label="Toggle navigation drawer">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-          </button>
-          <h1 class="view-title mono tabular" id="page-title">THE LUMINARIES / CONSTELLATION OVERVIEW</h1>
-        </div>
+    <!-- 2. MAIN STAGE & CONTENT (RIGHT) -->
+    <div class="ml-0 lg:ml-64 flex-1 flex flex-col min-w-0 bg-[#0f131c]">
 
-        <div class="topbar-right">
-          <div class="pulse-pill" id="telemetry-pulse" data-status="nominal">
-            <span class="pulse-dot" aria-hidden="true"></span>
-            <span id="pulse-text" class="mono tabular">Connecting...</span>
+      <!-- TOP HEADER & COMMAND STRIP -->
+      <header class="sticky top-0 z-30 bg-[#0f131c]/95 backdrop-blur-md border-b border-[#262a34]/80 px-3.5 sm:px-6 py-2.5 sm:py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 sm:gap-4">
+        <!-- Top / Primary Row on mobile; flex item on desktop -->
+        <div class="flex items-center justify-between gap-2 w-full md:w-auto">
+          <!-- Left: Hamburger toggle + Status Title -->
+          <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <button type="button" id="mobile-menu-btn" class="p-1.5 rounded-lg bg-[#181b25] border border-[#262a34] text-slate-300 hover:text-white hover:bg-[#262a34] block lg:hidden transition flex-shrink-0" aria-label="Open Navigation Menu">
+              <span class="material-symbols-outlined text-[20px]">menu</span>
+            </button>
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#4ade80] shadow-[0_0_8px_#4ade80] flex-shrink-0"></span>
+              <span class="text-xs font-mono font-bold text-white tracking-wide uppercase truncate hidden sm:inline" id="page-title">CONSTELLATION OVERVIEW</span>
+              <span class="text-xs font-mono font-bold text-white tracking-wide uppercase sm:hidden">LUMINARIES</span>
+              <span class="text-slate-400 hidden sm:inline">·</span>
+              <span class="text-xs font-mono text-slate-300 hidden sm:inline" id="luminaries-count">10 Luminaries Online</span>
+            </div>
           </div>
 
-          <!-- DUAL CHRONOS CLUSTER: LIVE WIB CLOCK & RELATIVE SYNC -->
-          <div class="topbar-chronos-cluster" title="Telemetry Synchronization &amp; Precision WIB Clock">
-            <div class="live-clock-badge mono tabular" id="realtime-clock-display" aria-label="Real-time Clock (WIB)">
-              <span class="clock-live-dot" aria-hidden="true"></span>
+          <!-- Right (on mobile, top row right): Actions & Live Clock -->
+          <div class="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0 md:order-3">
+            <!-- Live Clock (WIB) -->
+            <div class="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-[#181b25] border border-[#262a34] text-[11px] sm:text-xs font-mono text-slate-300" id="realtime-clock-display" title="Precision Real-time Clock (WIB)">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#4cd7f6] animate-ping"></span>
               <span id="live-clock-text">--:--:-- WIB</span>
             </div>
-            <div class="sync-ago-badge mono tabular" id="last-sync-display" aria-label="Last Synchronization Status" title="Last data synchronization time">
-              Synced: Loading...
-            </div>
-          </div>
 
-          <button type="button" class="btn btn-icon-only btn-ghost" id="topbar-sync-btn" aria-label="Synchronize telemetry now">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
-          </button>
+            <!-- Action buttons -->
+            <button type="button" id="topbar-polling-btn" class="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-[#181b25] hover:bg-[#262a34] border border-[#262a34] text-xs font-medium text-slate-200 hover:text-white transition-all" title="Pause or Resume Neural Synapses">
+              <span class="material-symbols-outlined text-[16px] text-slate-400" id="topbar-polling-icon">pause</span>
+              <span id="topbar-polling-text" class="hidden sm:inline">Pause Synapses</span>
+            </button>
+
+            <button type="button" id="topbar-sync-btn" class="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-[#181b25] hover:bg-[#262a34] border border-[#262a34] text-xs font-medium text-slate-200 hover:text-white transition-all" title="Sync Telemetry from Backend">
+              <span class="material-symbols-outlined text-[16px] text-[#4cd7f6]">sync</span>
+              <span class="hidden sm:inline">Sync Now</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Center: Quick Command Filter & Directive Search -->
+        <div class="relative w-full md:flex-1 md:max-w-md md:order-2">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] pointer-events-none select-none">search</span>
+          <input type="search" id="hud-command-input" placeholder="Search fleet or tasks..." 
+            class="w-full bg-[#141822] border border-[#262a34] rounded-lg pl-9 pr-12 py-1.5 sm:py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-[#8083ff] focus:ring-1 focus:ring-[#8083ff] transition-all font-mono"
+            aria-label="Quick Command Filter">
+          <kbd class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-400 bg-[#262a34] px-1.5 py-0.5 rounded border border-white/5 pointer-events-none select-none hidden sm:inline">⌘K</kbd>
         </div>
       </header>
 
-      <!-- CONTENT AREA -->
-      <main class="content-area" id="main-content-flow">
-        
-        <!-- SECTION 1: CONSTELLATION OVERVIEW -->
-        <section class="section-block active-view" id="view-overview" aria-labelledby="heading-overview">
-          <div class="section-head">
-            <div class="section-title-group">
-              <span class="section-icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-              </span>
-              <h2 class="section-title" id="heading-overview">Constellation Overview</h2>
+      <!-- SUB-HEADER TELEMETRY STRIP -->
+      <div class="bg-[#181b25]/70 border-b border-[#262a34]/60 px-3.5 sm:px-6 py-2 flex items-center justify-between gap-4 text-xs font-mono overflow-x-auto no-scrollbar">
+        <div class="flex items-center gap-4 sm:gap-6 flex-shrink-0 text-[11px] sm:text-xs">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <span class="text-slate-400">Active Swarm:</span>
+            <span class="text-white font-semibold">10 / 10 Luminaries</span>
+          </div>
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <span class="text-slate-400">Tasks Dispatched:</span>
+            <span class="text-[#c0c1ff] font-semibold tabular-nums" id="kpi-task-throughput">0</span>
+          </div>
+          <div class="flex items-center gap-1.5 sm:gap-2" id="fleet-latency-badge">
+            <span class="text-slate-400">Mean Latency:</span>
+            <span class="text-[#4cd7f6] font-semibold tabular-nums">~14ms</span>
+          </div>
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <span class="text-slate-400">Consensus Rate:</span>
+            <span class="text-[#4ade80] font-semibold tabular-nums">100.0% Nominal</span>
+          </div>
+        </div>
+        <div class="text-[10px] sm:text-[11px] text-slate-400 flex-shrink-0" id="last-sync-display">
+          Synced: live
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT VIEWS WRAPPER -->
+      <main class="flex-1 p-3.5 sm:p-5 md:p-6 space-y-4 sm:space-y-6">
+
+        <!-- VIEW 1: OVERVIEW / RADIAL NEURAL WEB CANVAS (PRIMARY) -->
+        <div id="view-overview" class="view-panel space-y-4 sm:space-y-6">
+
+          <!-- 2-COLUMN RESPONSIVE LAYOUT (CANVAS + DISPATCH STREAM vs INSPECTOR + HEALTH MATRIX) -->
+          <section class="grid grid-cols-12 gap-4 sm:gap-5" aria-label="Constellation Overview Dashboard">
+
+            <!-- LEFT COLUMN: RADIAL NEURAL WEB CANVAS + LIVE DISPATCH STREAM -->
+            <div class="col-span-12 lg:col-span-7 flex flex-col gap-4 sm:gap-5">
+
+              <!-- Radial Neural Web Canvas -->
+              <div class="bg-[#181b25] border border-[#262a34] rounded-xl p-3.5 sm:p-4 flex flex-col relative overflow-hidden shadow-2xl">
+                <!-- Canvas Toolbar -->
+              <div class="flex items-center justify-between pb-3 mb-2 border-b border-[#262a34]/60 z-10">
+                <div class="flex items-center gap-2.5">
+                  <span class="material-symbols-outlined text-[#4cd7f6] text-[20px]">radar</span>
+                  <div>
+                    <h2 class="text-xs font-mono font-bold tracking-wider text-white uppercase">Radial Neural Web Canvas</h2>
+                    <p class="text-[11px] text-slate-400">Live Synaptic Lattice · 10 Pure Sovereign Luminaries</p>
+                  </div>
+                </div>
+
+                <!-- Zoom & Reset Controls -->
+                <div class="flex items-center gap-1.5 bg-[#0a0e17] p-1 rounded-lg border border-[#262a34]">
+                  <button type="button" id="canvas-zoom-in" class="p-1 rounded hover:bg-[#262a34] text-slate-300 hover:text-white transition" title="Zoom In" aria-label="Zoom in on canvas">
+                    <span class="material-symbols-outlined text-[16px]">zoom_in</span>
+                  </button>
+                  <button type="button" id="canvas-zoom-out" class="p-1 rounded hover:bg-[#262a34] text-slate-300 hover:text-white transition" title="Zoom Out" aria-label="Zoom out of canvas">
+                    <span class="material-symbols-outlined text-[16px]">zoom_out</span>
+                  </button>
+                  <button type="button" id="canvas-zoom-reset" class="p-1 rounded hover:bg-[#262a34] text-slate-300 hover:text-white transition" title="Reset Canvas" aria-label="Reset canvas view">
+                    <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- SVG Canvas Container -->
+              <div class="relative w-full h-[340px] sm:h-[420px] md:h-[500px] flex items-center justify-center bg-[#0a0e17]/80 rounded-lg overflow-hidden border border-[#262a34]/40" id="canvas-viewport">
+                <svg id="radial-neural-svg" viewBox="0 0 800 640" preserveAspectRatio="xMidYMid meet" class="w-full h-full select-none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <!-- Core Gradients & Filters -->
+                    <radialGradient id="spiderGlow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#8083ff" stop-opacity="0.45" />
+                      <stop offset="70%" stop-color="#8083ff" stop-opacity="0.1" />
+                      <stop offset="100%" stop-color="#0f131c" stop-opacity="0" />
+                    </radialGradient>
+                    <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#4cd7f6" stop-opacity="0.5" />
+                      <stop offset="100%" stop-color="#181b25" stop-opacity="0" />
+                    </radialGradient>
+                    <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
+                      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+                  </defs>
+
+                  <!-- 1. Background Range Rings (Circular) -->
+                  <g class="range-rings" stroke="rgba(255,255,255,0.04)" stroke-width="1" fill="none">
+                    <circle cx="400" cy="320" r="80" stroke-dasharray="3 6" />
+                    <circle cx="400" cy="320" r="160" stroke-dasharray="4 8" />
+                    <circle cx="400" cy="320" r="240" stroke-dasharray="5 10" />
+                  </g>
+
+                  <!-- 2. Concentric Polygon Spider Web Rings -->
+                  <g class="web-polygons" stroke="rgba(128,131,255,0.18)" stroke-width="1" fill="none">
+                    <!-- Ring 1 (t=0.32) -->
+                    <polygon points="400,246 448,259 480,294 474,352 429,384 371,384 326,352 320,294 352,259" stroke-dasharray="2 4" />
+                    <!-- Ring 2 (t=0.62) -->
+                    <polygon points="400,177 493,202 555,270 543,382 456,444 344,444 257,382 245,270 307,202" stroke-dasharray="3 5" />
+                    <!-- Ring 3 (t=0.86) -->
+                    <polygon points="400,122 529,157 615,251 598,406 477,492 323,492 202,406 185,251 271,157" stroke="rgba(76,215,246,0.22)" />
+                  </g>
+
+                  <!-- 3. Peripheral Outer Mesh Connectors (Outer loop connecting all 9 radial nodes) -->
+                  <polygon points="400,90 550,130 650,240 630,420 490,520 310,520 170,420 150,240 250,130" 
+                    fill="rgba(128,131,255,0.02)" stroke="rgba(76,215,246,0.3)" stroke-width="1.2" stroke-dasharray="4 4" />
+
+                  <!-- 4. Radial Strands connecting Center Spidey to 9 Luminaries -->
+                  <g class="radial-strands" stroke="rgba(128,131,255,0.25)" stroke-width="1.5">
+                    <line x1="400" y1="320" x2="400" y2="90" id="strand-sage" />
+                    <line x1="400" y1="320" x2="550" y2="130" id="strand-athena" />
+                    <line x1="400" y1="320" x2="650" y2="240" id="strand-chronos" />
+                    <line x1="400" y1="320" x2="630" y2="420" id="strand-zephyr" />
+                    <line x1="400" y1="320" x2="490" y2="520" id="strand-daemon" />
+                    <line x1="400" y1="320" x2="310" y2="520" id="strand-iris" />
+                    <line x1="400" y1="320" x2="170" y2="420" id="strand-aegis" />
+                    <line x1="400" y1="320" x2="150" y2="240" id="strand-nacht" />
+                    <line x1="400" y1="320" x2="250" y2="130" id="strand-ariadne" />
+                  </g>
+
+                  <!-- 5. Dynamic Synaptic Particles along Strands (Activated exclusively during Spidey dispatch) -->
+                  <g class="animated-particles" id="animated-particles" filter="url(#glowFilter)">
+                    <!-- Dynamic synaptic pulse particles are injected programmatically during Spidey dispatches -->
+                  </g>
+
+                  <!-- 6. Outer 9 Radial Luminaries Nodes -->
+                  <!-- 02 · Sage (400, 90) -->
+                  <g class="canvas-node" data-node="sage" onclick="selectNode('sage')" role="button" tabindex="0" aria-label="Select 02 Sage">
+                    <circle cx="400" cy="90" r="28" fill="transparent" />
+                    <circle cx="400" cy="90" r="18" fill="none" stroke="#4cd7f6" class="node-ping-ring" />
+                    <circle cx="400" cy="90" r="18" fill="#181b25" stroke="#31353f" stroke-width="1.5" class="node-ring" />
+                    <circle cx="400" cy="90" r="7" fill="#4cd7f6" class="node-core" />
+                    <text x="400" y="124" text-anchor="middle" class="fill-slate-200 text-[11px] font-mono font-medium node-label">02 · Sage</text>
+                    <text x="400" y="136" text-anchor="middle" class="fill-slate-400 text-[9px] font-sans">REASONING</text>
+                  </g>
+
+                  <!-- 03 · Athena (550, 130) -->
+                  <g class="canvas-node" data-node="athena" onclick="selectNode('athena')" role="button" tabindex="0" aria-label="Select 03 Athena">
+                    <circle cx="550" cy="130" r="28" fill="transparent" />
+                    <circle cx="550" cy="130" r="18" fill="none" stroke="#4cd7f6" class="node-ping-ring" />
+                    <circle cx="550" cy="130" r="18" fill="#181b25" stroke="#31353f" stroke-width="1.5" class="node-ring" />
+                    <circle cx="550" cy="130" r="7" fill="#4cd7f6" class="node-core" />
+                    <text x="550" y="164" text-anchor="middle" class="fill-slate-200 text-[11px] font-mono font-medium node-label">03 · Athena</text>
+                    <text x="550" y="176" text-anchor="middle" class="fill-slate-400 text-[9px] font-sans">THESIS</text>
+                  </g>
+
+                  <!-- 04 · Chronos (650, 240) -->
+                  <g class="canvas-node" data-node="chronos" onclick="selectNode('chronos')" role="button" tabindex="0" aria-label="Select 04 Chronos">
+                    <circle cx="650" cy="240" r="28" fill="transparent" />
+                    <circle cx="650" cy="240" r="18" fill="none" stroke="#4cd7f6" class="node-ping-ring" />
+                    <circle cx="650" cy="240" r="18" fill="#181b25" stroke="#31353f" stroke-width="1.5" class="node-ring" />
+                    <circle cx="650" cy="240" r="7" fill="#4cd7f6" class="node-core" />
+                    <text x="650" y="274" text-anchor="middle" class="fill-slate-200 text-[11px] font-mono font-medium node-label">04 · Chronos</text>
+                    <text x="650" y="286" text-anchor="middle" class="fill-slate-400 text-[9px] font-sans">PACING</text>
+                  </g>
+
+                  <!-- 05 · Zephyr (630, 420) -->
+                  <g class="canvas-node" data-node="zephyr" onclick="selectNode('zephyr')" role="button" tabindex="0" aria-label="Select 05 Zephyr">
+                    <circle cx="630" cy="420" r="28" fill="transparent" />
+                    <circle cx="630" cy="420" r="18" fill="none" stroke="#4cd7f6" class="node-ping-ring" />
+                    <circle cx="630" cy="420" r="18" fill="#181b25" stroke="#31353f" stroke-width="1.5" class="node-ring" />
+                    <circle cx="630" cy="420" r="7" fill="#4cd7f6" class="node-core" />
+                    <text x="630" y="454" text-anchor="middle" class="fill-slate-200 text-[11px] font-mono font-medium node-label">05 · Zephyr</text>
+                    <text x="630" y="466" text-anchor="middle" class="fill-slate-400 text-[9px] font-sans">BACKEND</text>
+                  </g>
+
+                  <!-- 06 · Daemon (490, 520) -->
+                  <g class="canvas-node" data-node="daemon" onclick="selectNode('daemon')" role="button" tabindex="0" aria-label="Select 06 Daemon">
+                    <circle cx="490" cy="520" r="28" fill="transparent" />
+                    <circle cx="490" cy="520" r="18" fill="none" stroke="#4cd7f6" class="node-ping-ring" />
+                    <circle cx="490" cy="520" r="18" fill="#181b25" stroke="#31353f" stroke-width="1.5" class="node-ring" />
+                    <circle cx="490" cy="520" r="7" fill="#4cd7f6" class="node-core" />
+                    <text x="490" y="554" text-anchor="middle" class="fill-slate-200 text-[11px] font-mono font-medium node-label">06 · Daemon</text>
+                    <text x="490" y="566" text-anchor="middle" class="fill-slate-400 text-[9px] font-sans">INFRA</text>
+                  </g>
+
+                  <!-- 07 · Iris (310, 520) -->
+                  <g class="canvas-node" data-node="iris" onclick="selectNode('iris')" role="button" tabindex="0" aria-label="Select 07 Iris">
+                    <circle cx="310" cy="520" r="28" fill="transparent" />
+                    <circle cx="310" cy="520" r="18" fill="none" stroke="#4cd7f6" class="node-ping-ring" />
+                    <circle cx="310" cy="520" r="18" fill="#181b25" stroke="#31353f" stroke-width="1.5" class="node-ring" />
+                    <circle cx="310" cy="520" r="7" fill="#4cd7f6" class="node-core" />
+                    <text x="310" y="554" text-anchor="middle" class="fill-slate-200 text-[11px] font-mono font-medium node-label">07 · Iris</text>
+                    <text x="310" y="566" text-anchor="middle" class="fill-slate-400 text-[9px] font-sans">FRONTEND</text>
+                  </g>
+
+                  <!-- 08 · Aegis (170, 420) -->
+                  <g class="canvas-node" data-node="aegis" onclick="selectNode('aegis')" role="button" tabindex="0" aria-label="Select 08 Aegis">
+                    <circle cx="170" cy="420" r="28" fill="transparent" />
+                    <circle cx="170" cy="420" r="18" fill="none" stroke="#4cd7f6" class="node-ping-ring" />
+                    <circle cx="170" cy="420" r="18" fill="#181b25" stroke="#31353f" stroke-width="1.5" class="node-ring" />
+                    <circle cx="170" cy="420" r="7" fill="#4cd7f6" class="node-core" />
+                    <text x="170" y="454" text-anchor="middle" class="fill-slate-200 text-[11px] font-mono font-medium node-label">08 · Aegis</text>
+                    <text x="170" y="466" text-anchor="middle" class="fill-slate-400 text-[9px] font-sans">SECURITY</text>
+                  </g>
+
+                  <!-- 09 · Nacht (150, 240) -->
+                  <g class="canvas-node" data-node="nacht" onclick="selectNode('nacht')" role="button" tabindex="0" aria-label="Select 09 Nacht">
+                    <circle cx="150" cy="240" r="28" fill="transparent" />
+                    <circle cx="150" cy="240" r="18" fill="none" stroke="#4cd7f6" class="node-ping-ring" />
+                    <circle cx="150" cy="240" r="18" fill="#181b25" stroke="#31353f" stroke-width="1.5" class="node-ring" />
+                    <circle cx="150" cy="240" r="7" fill="#4cd7f6" class="node-core" />
+                    <text x="150" y="274" text-anchor="middle" class="fill-slate-200 text-[11px] font-mono font-medium node-label">09 · Nacht</text>
+                    <text x="150" y="286" text-anchor="middle" class="fill-slate-400 text-[9px] font-sans">RECON</text>
+                  </g>
+
+                  <!-- 10 · Ariadne (250, 130) -->
+                  <g class="canvas-node" data-node="ariadne" onclick="selectNode('ariadne')" role="button" tabindex="0" aria-label="Select 10 Ariadne">
+                    <circle cx="250" cy="130" r="28" fill="transparent" />
+                    <circle cx="250" cy="130" r="18" fill="none" stroke="#4cd7f6" class="node-ping-ring" />
+                    <circle cx="250" cy="130" r="18" fill="#181b25" stroke="#31353f" stroke-width="1.5" class="node-ring" />
+                    <circle cx="250" cy="130" r="7" fill="#4cd7f6" class="node-core" />
+                    <text x="250" y="164" text-anchor="middle" class="fill-slate-200 text-[11px] font-mono font-medium node-label">10 · Ariadne</text>
+                    <text x="250" y="176" text-anchor="middle" class="fill-slate-400 text-[9px] font-sans">PKM</text>
+                  </g>
+
+                  <!-- 7. Center Master Node (Spidey Core: 400, 320) -->
+                  <g class="canvas-node node-selected" data-node="nexus" onclick="selectNode('nexus')" role="button" tabindex="0" aria-label="Select 01 Spidey Central Core">
+                    <!-- Outer Glow Ring -->
+                    <circle cx="400" cy="320" r="48" fill="url(#spiderGlow)" class="animate-pulse-glow" />
+                    <!-- Ping Ring Ripple -->
+                    <circle cx="400" cy="320" r="28" fill="none" stroke="#4cd7f6" class="node-ping-ring" />
+                    <!-- Spinning Dashed Ring -->
+                    <circle cx="400" cy="320" r="38" fill="none" stroke="#8083ff" stroke-width="1.5" stroke-dasharray="6 4" class="animate-spin-slow" />
+                    <!-- Inner Core Body -->
+                    <circle cx="400" cy="320" r="28" fill="#181b25" stroke="#31353f" stroke-width="2" class="node-ring" />
+                    <!-- Spider Insignia -->
+                    <path d="M394 316 C394 310, 406 310, 406 316 C406 322, 394 322, 394 316 Z M393 324 C393 318, 407 318, 407 324 C407 329, 393 329, 393 324 Z M391 315 L385 310 M409 315 L415 310 M390 321 L383 321 M410 321 L417 321 M391 326 L384 331 M409 326 L416 331" 
+                      stroke="#4cd7f6" stroke-width="1.5" stroke-linecap="round" fill="none" />
+                    <!-- Labels -->
+                    <text x="400" y="368" text-anchor="middle" class="fill-white text-[12px] font-mono font-bold node-label tracking-wide">01 · Spidey</text>
+                    <text x="400" y="380" text-anchor="middle" class="fill-[#8083ff] text-[9px] font-mono font-semibold tracking-wider">ORCHESTRATOR</text>
+                  </g>
+                </svg>
+              </div>
             </div>
-            <p class="section-desc">Real-time telemetry and operational status for 10 Sovereign Luminaries.</p>
+
+            <!-- SPIDEY'S LIVE DISPATCH STREAM -->
+            <div class="bg-[#181b25] border border-[#262a34] rounded-xl p-4 flex flex-col shadow-xl">
+              <div class="flex items-center justify-between pb-3 mb-2 border-b border-[#262a34]/60">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#4cd7f6] animate-pulse"></span>
+                  <h3 class="text-xs font-mono font-bold uppercase text-white tracking-wider">Live Dispatch Stream</h3>
+                </div>
+                <button type="button" id="stream-clear-btn" class="text-[10px] font-mono text-slate-400 hover:text-white transition">
+                  Clear Window
+                </button>
+              </div>
+
+              <!-- Stream Timeline Feed -->
+              <div id="live-stream-container" class="space-y-2 h-[320px] overflow-y-auto pr-1 font-mono text-xs" role="log" aria-live="polite">
+                <div id="dispatch-stream-items" class="space-y-2">
+                  <!-- Injected via app.js from /api/tasks -->
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <div class="cards-grid">
-            <!-- CARD 1: FLEET VITAL MATRIX -->
-            <div class="panel-card card-vital">
-              <div class="card-header">
-                <span class="card-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                  The Luminaries Matrix
+          <!-- RIGHT COLUMN: LIVE SYNAPSE INSPECTOR & SUB-AGENT HEALTH MATRIX -->
+          <!-- RIGHT COLUMN: INSPECTOR + SUB-AGENT HEALTH MATRIX -->
+          <div class="col-span-12 lg:col-span-5 flex flex-col gap-4 sm:gap-5">
+
+            <!-- Dynamic Inspector Card -->
+            <div class="bg-[#181b25] border border-[#262a34] rounded-xl p-3.5 sm:p-4 flex flex-col gap-3.5 shadow-xl">
+              <div class="flex items-center justify-between pb-3 border-b border-[#262a34]/60">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[#8083ff] text-[20px]">troubleshoot</span>
+                  <span class="text-xs font-mono font-bold uppercase text-white tracking-wider">Live Synapse Inspector</span>
+                </div>
+                <span id="inspector-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#4ade80]/10 text-[#4ade80] border border-[#4ade80]/20">
+                  NOMINAL
                 </span>
-                <span class="section-count mono tabular" id="agents-total-count"><span id="luminaries-count">10 Luminaries</span></span>
               </div>
 
-              <!-- THE LUMINARIES GRID (10 REASONING ENTITIES) -->
-              <div class="fleet-matrix-grid luminaries-grid" id="luminaries-container">
-                <!-- Injected via app.js -->
+              <!-- Entity Headline -->
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-lg bg-[#262a34] flex items-center justify-center border border-[#8083ff]/30 text-[#c0c1ff]" id="inspector-avatar">
+                  <span class="material-symbols-outlined text-[24px]">hub</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-bold text-white font-mono truncate" id="inspector-title">01 · Spidey</h3>
+                  <p class="text-xs text-[#8083ff] font-medium" id="inspector-role">Sovereign Orchestrator Core</p>
+                </div>
+              </div>
+
+              <!-- Operational Spec -->
+              <div class="bg-[#1c1f29] rounded-lg p-3 border border-[#262a34] text-xs text-slate-300 leading-relaxed font-sans" id="inspector-spec">
+                Single entry point, delegation, coordination &amp; consensus across all 10 sovereign agents.
+              </div>
+
+              <!-- Real Agent Telemetry Metrics -->
+              <div class="space-y-2.5 font-mono text-xs bg-[#141822] p-3 rounded-lg border border-[#262a34]">
+                <div class="flex justify-between items-center text-[11px]">
+                  <span class="text-slate-400">Process PID:</span>
+                  <span class="text-white font-semibold tabular-nums" id="inspector-pid">Standby / Inactive</span>
+                </div>
+
+                <div class="flex justify-between items-center text-[11px]">
+                  <span class="text-slate-400">Log Size:</span>
+                  <span class="text-[#4cd7f6] font-semibold tabular-nums" id="inspector-log-size">-</span>
+                </div>
+
+                <div class="flex justify-between items-center text-[11px]">
+                  <span class="text-slate-400">Last Active:</span>
+                  <span class="text-slate-200 tabular-nums" id="inspector-last-active">-</span>
+                </div>
+
+                <div class="flex justify-between items-center text-[11px] pt-1.5 border-t border-[#262a34]/60">
+                  <span class="text-slate-400">Total Dispatches:</span>
+                  <span class="text-[#c0c1ff] font-semibold tabular-nums" id="inspector-dispatches">0 Dispatches</span>
+                </div>
+              </div>
+
+              <!-- Inspector Actions -->
+              <div class="pt-2 border-t border-[#262a34]/60">
+                <button type="button" id="inspector-trace-btn" class="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#8083ff]/20 hover:bg-[#8083ff]/30 border border-[#8083ff]/40 text-xs font-mono text-[#c0c1ff] transition font-medium">
+                  <span class="material-symbols-outlined text-[16px]">visibility</span>
+                  <span>Inspect Full Telemetry</span>
+                </button>
               </div>
             </div>
 
-            <!-- CARD 2: IN-FLIGHT EXECUTION -->
-            <div class="panel-card card-inflight">
-              <div class="card-header">
-                <span class="card-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                  In-Flight Executions
-                </span>
-                <span class="section-count mono tabular" id="inflight-count">0</span>
+            <!-- Sub-Agent Health Matrix (10 Nodes Table) -->
+            <div class="bg-[#181b25] border border-[#262a34] rounded-xl p-3.5 sm:p-4 flex flex-col shadow-xl">
+              <div class="flex items-center justify-between pb-3 mb-2 border-b border-[#262a34]/60">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[#8083ff] text-[18px]">table_rows</span>
+                  <h3 class="text-xs font-mono font-bold uppercase text-white tracking-wider">Sub-Agent Health Matrix</h3>
+                </div>
+                <span class="text-[10px] font-mono text-slate-400">10 Pure Luminaries · Click to Inspect</span>
               </div>
-              <div id="inflight-container" class="task-flow-list">
-                <!-- Injected via app.js -->
+
+              <!-- Table Container with Bounded Scrolling -->
+              <div class="overflow-x-auto max-h-[380px] overflow-y-auto custom-scrollbar">
+                <table class="w-full text-left font-mono text-xs border-collapse min-w-[440px] sm:min-w-0" id="luminaries-container">
+                  <thead class="sticky top-0 bg-[#181b25] z-10 shadow-sm">
+                    <tr class="border-b border-[#262a34] text-[11px] text-slate-400 uppercase tracking-wider">
+                      <th class="pb-2 pl-2 font-medium">Entity &amp; Spec</th>
+                      <th class="pb-2 font-medium">Status</th>
+                      <th class="pb-2 font-medium">PID</th>
+                      <th class="pb-2 font-medium hidden sm:table-cell">Log Size</th>
+                      <th class="pb-2 pr-2 font-medium text-right">Dispatches</th>
+                    </tr>
+                  </thead>
+                  <tbody id="health-matrix-body" class="divide-y divide-[#262a34]/40">
+                    <!-- Populated dynamically via app.js -->
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            <!-- CARD 3: RECENT HANDOFF RELAY -->
-            <div class="panel-card card-relay">
-              <div class="card-header">
-                <span class="card-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
-                  Recent Handoff Relays
-                </span>
-                <span class="section-count mono tabular" id="relay-count">0</span>
-              </div>
-              <div id="relay-container" class="task-flow-list">
-                <!-- Injected via app.js -->
-              </div>
-            </div>
           </div>
         </section>
 
-        <!-- SECTION 2: INCIDENTS & ANOMALIES -->
-        <section class="section-block" id="view-incidents" aria-labelledby="heading-incidents">
-          <div class="section-head">
-            <div class="section-title-group">
-              <span class="section-icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-              </span>
-              <h2 class="section-title" id="heading-incidents">Incidents &amp; Anomalies</h2>
-            </div>
-            <p class="section-desc">Operational anomalies, unhandled exceptions, and circuit-breaker telemetry requiring intervention.</p>
+      </div>
+
+        <!-- VIEW 2: FLEET ROSTER (FULL VIEW) -->
+        <div id="view-roster" class="view-panel hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-white font-mono">SOVEREIGN FLEET ROSTER</h2>
+            <span class="text-xs font-mono text-slate-400">10 Pure Sovereign Luminaries</span>
           </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="roster-grid-cards">
+            <!-- Injected via app.js -->
+          </div>
+        </div>
 
-          <div class="panel-card card-incidents-full" id="card-incidents-anchor">
-            <div class="card-header">
-              <span class="card-title">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                Incident Telemetry Log
-              </span>
-              <span class="section-count mono tabular" id="incidents-active-badge">0 Active</span>
-            </div>
+        <!-- VIEW 3: TELEMETRY (DEEP SYSTEM METRICS) -->
+        <div id="view-telemetry" class="view-panel hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-white font-mono">CONSTELLATION TELEMETRY</h2>
+            <span class="text-xs font-mono text-[#4ade80]">Consensus Health 100.0%</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="telemetry-deep-grid">
+            <!-- Telemetry summary cards -->
+          </div>
+        </div>
 
-            <!-- Incident Filter Bar -->
-            <div class="incident-filter-bar" role="group" aria-label="Incident Filter Categories">
-              <button type="button" class="filter-chip active" data-incident-filter="all" id="inc-filter-all">
-                All (<span class="mono tabular" id="count-all-inc">0</span>)
-              </button>
-              <button type="button" class="filter-chip" data-incident-filter="live" id="inc-filter-live">
-                Action Required (<span class="mono tabular" id="count-live-inc">0</span>)
-              </button>
-              <button type="button" class="filter-chip" data-incident-filter="closed-no-action" id="inc-filter-closed">
-                Closed (No Action) (<span class="mono tabular" id="count-closed-inc">0</span>)
-              </button>
-              <button type="button" class="filter-chip" data-incident-filter="resolved" id="inc-filter-resolved">
-                Resolved (<span class="mono tabular" id="count-resolved-inc">0</span>)
-              </button>
-            </div>
-
-            <div id="incidents-container" class="incidents-container">
-              <!-- Injected via app.js -->
+        <!-- VIEW 4: EXECUTION LOGS & TASK STREAM -->
+        <div id="view-stream" class="view-panel hidden space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h2 class="text-base font-bold text-white font-mono">EXECUTION AUDIT LOGS</h2>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <input type="search" id="task-search-input" placeholder="Filter tasks by ID, route, intent..." class="bg-[#181b25] border border-[#262a34] focus:border-[#8083ff]/60 outline-none rounded-lg px-3 py-1.5 text-xs text-white font-mono w-full sm:w-80 transition">
             </div>
           </div>
-        </section>
-
-        <!-- SECTION 3: TOPOLOGY & HANDOFFS -->
-        <section class="section-block" id="view-topology" aria-labelledby="heading-topology">
-          <div class="section-head">
-            <div class="section-title-group">
-              <span class="section-icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-              </span>
-              <h2 class="section-title" id="heading-topology">Topology &amp; Handoffs</h2>
-            </div>
-            <p class="section-desc">Architectural handoff flows: Live Telemetry vs. PRD Mandate Domain.</p>
-          </div>
-
-          <div class="relations-wrapper">
-            <div class="relations-tabs" role="tablist">
-              <button type="button" class="tab-btn active" role="tab" id="tab-rel-data" aria-selected="true" data-tab="data">
-                <span class="layer-badge badge-data">LIVE TELEMETRY</span>
-                <span>Recorded Edges (/api/relations)</span>
-              </button>
-              <button type="button" class="tab-btn" role="tab" id="tab-rel-doc" aria-selected="false" data-tab="doc">
-                <span class="layer-badge badge-doc">PRD MANDATE</span>
-                <span>Domain Architecture</span>
-              </button>
-            </div>
-
-            <!-- TAB 1: TELEMETRY DATA LAYER -->
-            <div id="panel-rel-data" class="relations-tab-panel" role="tabpanel" aria-labelledby="tab-rel-data">
-              <div class="telemetry-graph-view" id="telemetry-edges-grid">
+          <div class="bg-[#181b25] border border-[#262a34] rounded-xl overflow-x-auto">
+            <table class="w-full text-left font-mono text-xs min-w-[640px]">
+              <thead class="bg-[#0a0e17] text-slate-400 border-b border-[#262a34]">
+                <tr>
+                  <th class="p-3">Task ID</th>
+                  <th class="p-3">Time (WIB)</th>
+                  <th class="p-3">Route</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3">Elapsed</th>
+                  <th class="p-3">Intent Summary</th>
+                  <th class="p-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="task-table-body" class="divide-y divide-[#262a34]">
                 <!-- Injected via app.js -->
-              </div>
-            </div>
-
-            <!-- TAB 2: PRD MANDATE TOPOLOGY LAYER -->
-            <div id="panel-rel-doc" class="relations-tab-panel" role="tabpanel" aria-labelledby="tab-rel-doc" hidden>
-              <div class="doc-pipeline-grid">
-                <div class="pipeline-group">
-                  <div class="pipeline-group-title">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    1. Research &amp; Conceptual
-                  </div>
-                  <div class="pipeline-steps">
-                    <div class="pipeline-step"><span class="mono">nacht</span> (recon arXiv/web) ➔ <span class="mono">sage</span> (framing/PRD)</div>
-                    <div class="pipeline-step"><span class="mono">sage</span> ➔ <span class="mono">athena</span> (literature &amp; thesis prose)</div>
-                  </div>
-                </div>
-
-                <div class="pipeline-group">
-                  <div class="pipeline-group-title">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-                    2. Engineering &amp; Operations
-                  </div>
-                  <div class="pipeline-steps">
-                    <div class="pipeline-step"><span class="mono">iris</span> (UI/UX) + <span class="mono">zephyr</span> (backend API)</div>
-                    <div class="pipeline-step">➔ <span class="mono">daemon</span> (Linux runtime &amp; systemd deploy)</div>
-                  </div>
-                </div>
-
-                <div class="pipeline-group">
-                  <div class="pipeline-group-title">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                    3. Audit &amp; Quality Assurance
-                  </div>
-                  <div class="pipeline-steps">
-                    <div class="pipeline-step"><span class="mono">aegis</span> validates outputs of <span class="mono">zephyr</span>, <span class="mono">iris</span>, <span class="mono">daemon</span></div>
-                  </div>
-                </div>
-
-                <div class="pipeline-group">
-                  <div class="pipeline-group-title">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    4. Synthesis, Pacing &amp; Orchestration
-                  </div>
-                  <div class="pipeline-steps">
-                    <div class="pipeline-step"><span class="mono">chronos</span> (daily pacing/briefing) &amp; <span class="mono">ariadne</span> (PKM knowledge vault)</div>
-                    <div class="pipeline-step"><span class="mono">nexus</span>: Central Sovereign Dispatch &amp; Routing Node</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
+              </tbody>
+            </table>
           </div>
-        </section>
+        </div>
 
-        <!-- SECTION 4: TASK STREAM & AUDIT LOG -->
-        <section class="section-block" id="view-stream" aria-labelledby="heading-stream">
-          <div class="section-head">
-            <div class="section-title-group">
-              <span class="section-icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-              </span>
-              <h2 class="section-title" id="heading-stream">Task Stream &amp; Audit Log</h2>
+        <!-- VIEW 5: INCIDENTS & ANOMALIES -->
+        <div id="view-incidents" class="view-panel hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-white font-mono">INCIDENTS &amp; CIRCUIT BREAKERS</h2>
+            <span id="incidents-active-badge" class="px-2 py-0.5 rounded text-xs font-mono bg-[#4ade80]/10 text-[#4ade80] border border-[#4ade80]/20">0 Active</span>
+          </div>
+          <div id="incidents-container" class="space-y-3">
+            <!-- Injected via app.js -->
+          </div>
+        </div>
+
+        <!-- VIEW 6: TOPOLOGY & NEURAL HANDOFFS -->
+        <div id="view-topology" class="view-panel hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-white font-mono">ARCHITECTURAL TOPOLOGY &amp; HANDOFFS</h2>
+            <span class="text-xs font-mono text-[#8083ff]">PRD Mandate &amp; Live Telemetry</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="telemetry-edges-grid">
+            <!-- Injected via app.js -->
+          </div>
+        </div>
+
+        <!-- VIEW 7: LINUX VPS TELEMETRY & SRE METRICS -->
+        <section id="view-vps" class="view view-panel hidden space-y-4 sm:space-y-6" aria-labelledby="vps-view-title">
+          <!-- View Header Strip -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#262a34]">
+            <div class="flex items-center gap-2.5">
+              <span class="material-symbols-outlined text-[#4cd7f6] text-[22px]">dns</span>
+              <div>
+                <h2 id="vps-view-title" class="text-base font-bold text-white font-mono tracking-tight">LINUX VPS HOST &amp; SRE TELEMETRY</h2>
+                <p class="text-[11px] text-slate-400 font-mono">Autonomous Node Infrastructure &amp; Critical Daemon Fleet</p>
+              </div>
             </div>
-            <p class="section-desc">Full-fidelity execution history, agent dispatches, artifacts, and error auditing.</p>
+
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- Live Polling Badge -->
+              <div id="vps-auto-polling-indicator" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0a0e17] border border-[#262a34] text-[11px] font-mono text-slate-300">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse"></span>
+                <span id="vps-poll-rate-label">Auto-poll: 6s</span>
+              </div>
+
+              <!-- Manual Refresh Button -->
+              <button type="button" id="vps-refresh-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#181b25] hover:bg-[#262a34] border border-[#262a34] hover:border-[#8083ff]/40 text-xs font-mono text-slate-200 transition focus-visible:ring-2 focus-visible:ring-[#8083ff]" aria-label="Refresh VPS Telemetry">
+                <span class="material-symbols-outlined text-[16px] text-[#c0c1ff]">refresh</span>
+                <span>Sync Node</span>
+              </button>
+            </div>
           </div>
 
-          <div class="stream-panel">
-            <div class="stream-toolbar">
-              <div class="search-box">
-                <span class="search-icon-pos" aria-hidden="true">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </span>
-                <input type="search" class="search-input" id="task-search-input" placeholder="Search by task ID, intent, agent, or error message..." aria-label="Search task history">
-              </div>
+          <!-- Error Alert Banner -->
+          <div id="vps-error-banner" class="hidden bg-[#f87171]/10 border border-[#f87171]/30 rounded-xl p-3.5 flex items-center justify-between text-xs font-mono text-[#f87171]">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px]">error</span>
+              <span id="vps-error-text">Failed to fetch VPS telemetry from /api/vps</span>
+            </div>
+            <button type="button" id="vps-retry-btn" class="px-2.5 py-1 rounded bg-[#f87171]/20 hover:bg-[#f87171]/30 border border-[#f87171]/40 text-white font-bold transition">
+              Retry
+            </button>
+          </div>
 
-              <!-- Agent Filter Dropdown (Anti-Slop Craftsmanship) -->
-              <div class="agent-select-wrapper">
-                <select class="agent-filter-select" id="stream-agent-filter" aria-label="Filter tasks by Luminary entity">
-                  <option value="ALL">All Luminaries</option>
-                  <optgroup label="The Luminaries (10 Entities)">
-                    <option value="nexus">nexus · #01 Sovereign Orchestrator</option>
-                    <option value="sage">sage · #02 Research Strategist</option>
-                    <option value="athena">athena · #03 Scholar Architect</option>
-                    <option value="chronos">chronos · #04 Temporal Strategist</option>
-                    <option value="zephyr">zephyr · #05 Backend Architect</option>
-                    <option value="daemon">daemon · #06 Systems &amp; Infra</option>
-                    <option value="iris">iris · #07 UI/UX Artisan</option>
-                    <option value="aegis">aegis · #08 Security &amp; QA</option>
-                    <option value="nacht">nacht · #09 Recon Intelligence</option>
-                    <option value="ariadne">ariadne · #10 PKM &amp; Knowledge</option>
-                  </optgroup>
-                </select>
-              </div>
-
-              <!-- Status Filter Chips -->
-              <div class="incident-filter-bar status-filter-bar" role="group" aria-label="Filter Task Status">
-                <button type="button" class="filter-chip active" data-task-status="ALL" id="status-filter-all">All</button>
-                <button type="button" class="filter-chip" data-task-status="RUNNING" id="status-filter-run">Running</button>
-                <button type="button" class="filter-chip" data-task-status="FAILED" id="status-filter-fail">Failed</button>
-                <button type="button" class="filter-chip" data-task-status="SUCCEEDED" id="status-filter-succ">Succeeded</button>
+          <!-- 1. HOST INFO BANNER -->
+          <div id="vps-host-banner" class="bg-[#181b25] border border-[#262a34] rounded-xl p-4 sm:p-5 shadow-lg">
+            <div class="animate-pulse space-y-3 font-mono text-xs text-slate-400">
+              <div class="h-4 bg-[#262a34] rounded w-1/3"></div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="h-10 bg-[#0a0e17] rounded"></div>
+                <div class="h-10 bg-[#0a0e17] rounded"></div>
+                <div class="h-10 bg-[#0a0e17] rounded"></div>
+                <div class="h-10 bg-[#0a0e17] rounded"></div>
               </div>
             </div>
+          </div>
 
-            <div class="table-responsive">
-              <table class="stream-table" aria-label="Task Execution History Table">
-                <thead>
+          <!-- 2. RESOURCE CARDS (CPU, RAM, ROOT DISK) -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="vps-resources-grid">
+            <div class="bg-[#181b25] border border-[#262a34] rounded-xl p-4 sm:p-5 shadow-lg animate-pulse h-48"></div>
+            <div class="bg-[#181b25] border border-[#262a34] rounded-xl p-4 sm:p-5 shadow-lg animate-pulse h-48"></div>
+            <div class="bg-[#181b25] border border-[#262a34] rounded-xl p-4 sm:p-5 shadow-lg animate-pulse h-48"></div>
+          </div>
+
+          <!-- 3. SERVICES STATUS MATRIX -->
+          <div class="bg-[#181b25] border border-[#262a34] rounded-xl overflow-hidden shadow-lg">
+            <div class="p-3.5 sm:p-4 border-b border-[#262a34] flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#141822]">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#8083ff] text-[18px]">terminal</span>
+                <h3 class="text-xs font-mono font-bold uppercase text-white tracking-wider">CRITICAL SYSTEMD SERVICES MATRIX</h3>
+              </div>
+              <span class="text-[11px] font-mono text-slate-400" id="vps-services-summary">Loading services...</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left font-mono text-xs min-w-[700px]">
+                <thead class="bg-[#0a0e17] text-slate-400 border-b border-[#262a34]">
                   <tr>
-                    <th>Task ID</th>
-                    <th>Route</th>
-                    <th>Status</th>
-                    <th>Execution / Duration</th>
-                    <th>Intent Summary</th>
-                    <th>Actions</th>
+                    <th class="py-3 px-4">Service</th>
+                    <th class="py-3 px-4">Unit Name</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4">Main PID</th>
+                    <th class="py-3 px-4">Since / Uptime</th>
+                    <th class="py-3 px-4">Restarts</th>
+                    <th class="py-3 px-4 text-right">Scope</th>
                   </tr>
                 </thead>
-                <tbody id="task-table-body">
+                <tbody id="vps-services-table-body" class="divide-y divide-[#262a34]">
                   <!-- Injected via app.js -->
                 </tbody>
               </table>
-            </div>
-
-            <!-- Task Stream Pagination -->
-            <div class="pagination-container" id="stream-pagination">
-              <div class="pagination-meta mono tabular">
-                <span id="pagination-range-text">Showing 0 of 0 tasks</span>
-              </div>
-              <div class="pagination-controls">
-                <button type="button" class="btn btn-sm btn-ghost pagination-btn" id="task-page-prev" aria-label="Previous page" disabled>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                  <span>Previous</span>
-                </button>
-                <div class="page-indicator mono tabular" id="task-page-info">
-                  Page 1 of 1
-                </div>
-                <button type="button" class="btn btn-sm btn-ghost pagination-btn" id="task-page-next" aria-label="Next page" disabled>
-                  <span>Next</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </button>
-              </div>
             </div>
           </div>
         </section>
 
       </main>
+
     </div>
   </div>
 
-  <!-- THUMB DOCK (MOBILE F-01.3 & NF-05) -->
-  <nav class="thumb-dock" aria-label="Mobile Bottom Dock">
-    <button type="button" class="dock-btn active" data-dock="overview" id="dock-btn-overview">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-      <span>Overview</span>
-    </button>
-    <button type="button" class="dock-btn" data-dock="incidents" id="dock-btn-incidents">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-      <span>Incidents</span>
-    </button>
-    <button type="button" class="dock-btn" data-dock="topology" id="dock-btn-topology">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-      <span>Topology</span>
-    </button>
-    <button type="button" class="dock-btn" data-dock="stream" id="dock-btn-stream">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-      <span>Tasks</span>
-    </button>
-    <button type="button" class="dock-btn" id="dock-btn-sync" aria-label="Synchronize telemetry">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
-      <span>Sync</span>
-    </button>
-  </nav>
-
-  <!-- MODAL DRILL-DOWN TASK INSPECTION (F-03.4) -->
-  <div class="modal-backdrop" id="drilldown-modal" role="dialog" aria-modal="true" aria-labelledby="modal-task-title" hidden>
-    <div class="modal-sheet">
-      <div class="modal-header">
-        <h3 class="modal-title" id="modal-task-title">Task Inspection</h3>
-        <button type="button" class="btn btn-icon-only btn-ghost" id="modal-close-btn" aria-label="Close task inspection">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
-      <div class="modal-body" id="modal-task-body">
-        <!-- Injected via app.js -->
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL DRILL-DOWN DETAIL AGEN (F-02.5 ANTI-SLOP ARTISAN) -->
+  <!-- SLIDE-OVER DETAIL DRAWER FOR AGENTS -->
   <div class="modal-backdrop" id="agent-detail-modal" role="dialog" aria-modal="true" aria-labelledby="modal-agent-name" hidden>
-    <div class="modal-sheet modal-sheet-wide">
-      <div class="modal-header modal-header-agent">
-        <div class="modal-title-stack">
-          <div class="modal-title-top">
-            <span class="agent-modal-rank mono tabular" id="modal-agent-rank">#00</span>
-            <span class="modal-tier-tag" id="modal-agent-tier">THE LUMINARIES</span>
+    <div class="drawer-sheet" id="agent-drawer-modal">
+      <div class="p-4 sm:p-5 border-b border-[#262a34] bg-[#0a0e17] flex items-start justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 mb-1 flex-wrap">
+            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-[#1c1f29] text-[#c0c1ff] border border-[#262a34]" id="modal-agent-rank">#01</span>
+            <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400" id="modal-agent-tier">SOVEREIGN LUMINARY</span>
             <div id="modal-agent-status-badge"></div>
           </div>
-          <h3 class="modal-title" id="modal-agent-name">Agent Name</h3>
-          <p class="modal-subtitle" id="modal-agent-role">Operational Mandate &amp; Runtime Specifications</p>
+          <h3 class="text-base font-bold text-white font-mono" id="modal-agent-name">Agent Name</h3>
+          <p class="text-xs text-slate-400" id="modal-agent-role">Operational Mandate &amp; Telemetry</p>
         </div>
-        <button type="button" class="btn btn-icon-only btn-ghost" id="modal-agent-close-btn" aria-label="Close agent details">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <button type="button" id="modal-agent-close-btn" class="p-1.5 rounded text-slate-400 hover:text-white hover:bg-[#262a34] transition flex-shrink-0" aria-label="Close modal">
+          <span class="material-symbols-outlined text-[20px]">close</span>
         </button>
       </div>
-      <div class="modal-body modal-body-agent" id="modal-agent-body">
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 flex-1" id="modal-agent-body">
         <!-- Injected via app.js -->
       </div>
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- DRILLDOWN MODAL FOR TASKS -->
+  <div class="modal-backdrop" id="drilldown-modal" role="dialog" aria-modal="true" aria-labelledby="modal-task-title" hidden>
+    <div class="modal-sheet w-full max-w-4xl max-h-[90vh] mx-3 sm:mx-6">
+      <div class="p-4 sm:p-5 border-b border-[#262a34] bg-[#0a0e17] flex items-center justify-between gap-3">
+        <h3 class="text-sm font-bold text-white font-mono truncate" id="modal-task-title">Task Inspection</h3>
+        <button type="button" id="modal-close-btn" class="p-1.5 rounded text-slate-400 hover:text-white hover:bg-[#262a34] transition flex-shrink-0" aria-label="Close modal">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-4 max-h-[75vh]" id="modal-task-body">
+        <!-- Injected via app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- HANDOFF DRILLDOWN MODAL -->
+  <div class="modal-backdrop" id="handoff-modal" role="dialog" aria-modal="true" aria-labelledby="modal-handoff-title" hidden>
+    <div class="modal-sheet w-full max-w-4xl max-h-[90vh] mx-3 sm:mx-6">
+      <div class="p-4 sm:p-5 border-b border-[#262a34] bg-[#0a0e17] flex items-center justify-between gap-3">
+        <h3 class="text-sm font-bold text-white font-mono truncate" id="modal-handoff-title">Neural Handoff Spec</h3>
+        <button type="button" id="modal-handoff-close-btn" class="p-1.5 rounded text-slate-400 hover:text-white hover:bg-[#262a34] transition flex-shrink-0" aria-label="Close modal">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-4 max-h-[75vh]" id="modal-handoff-body">
+        <!-- Handoff content -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript Controller -->
+  <script src="app.js?v=20261025-neural-canvas"></script>
 </body>
 </html>
