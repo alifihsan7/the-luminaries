@@ -2243,8 +2243,1119 @@
     }
   }
 
+  // ==========================================
+  // 8.5 SOVEREIGN OFFICE SPACE 2D ENGINE (PIXIJS CANVAS)
+  // ==========================================
+  let officePixiApp = null;
+  let officePixiInitialized = false;
+  let officePixiLoading = false;
+  const officeEntities = {};
+  let officeTextures = {};
+  let officeWorldContainer = null;
+  let officeZoomLevel = 1.0;
+  let officeShowLabels = true;
+  let officeSelectedPod = 'all';
+  let officeAnimationTicker = 0;
+
+  const OFFICE_SPRITES = [
+    'floor-tile.png', 'boss-rug.png', 'desk.png', 'chair.png',
+    'monitor_back.png', 'keyboard_back.png', 'coffee-machine.png', 'coffee-mug.png',
+    'watercooler.png', 'old-printer.png', 'plant.png', 'employee-of-month.png',
+    'elevator_frame.png', 'elevator_door.png', 'desk-lamp.png', 'magic-8-ball.png',
+    'pen-holder.png', 'phone.png', 'rubber-duck.png', 'rubiks-cube.png',
+    'stapler.png', 'sunglasses.png', 'thermos.png', 'wall-outlet.png', 'headset_small.png'
+  ];
+
+  const OFFICE_STATIONS = [
+    {
+      key: 'nexus',
+      num: '01',
+      name: 'Spidey',
+      title: '01 · SPIDEY',
+      role: 'Sovereign Orchestration',
+      pod: 'command',
+      podLabel: 'Command Nexus',
+      x: 600,
+      y: 440,
+      isBoss: true,
+      accentColor: 0x8083ff,
+      hairColor: 0x312e81,
+      skinColor: 0xffdfba,
+      deskAccessories: [
+        { file: 'desk-lamp.png', x: -48, y: -26, scale: 0.16 },
+        { file: 'phone.png', x: 38, y: -18, scale: 0.026 },
+        { file: 'sunglasses.png', x: 20, y: -10, scale: 0.015 }
+      ]
+    },
+    {
+      key: 'zephyr',
+      num: '05',
+      name: 'Zephyr',
+      title: '05 · ZEPHYR',
+      role: 'Backend APIs & FastBench',
+      pod: 'dev',
+      podLabel: 'Dev & Systems',
+      x: 180,
+      y: 410,
+      accentColor: 0x34d399,
+      hairColor: 0x064e3b,
+      skinColor: 0xf5c6a5,
+      deskAccessories: [
+        { file: 'coffee-mug.png', x: 32, y: -16, scale: 0.02 }
+      ]
+    },
+    {
+      key: 'daemon',
+      num: '06',
+      name: 'Daemon',
+      title: '06 · DAEMON',
+      role: 'Linux VPS & SRE Infra',
+      pod: 'dev',
+      podLabel: 'Dev & Systems',
+      x: 340,
+      y: 410,
+      accentColor: 0x22c55e,
+      hairColor: 0x14532d,
+      skinColor: 0xe0ac69,
+      deskAccessories: [
+        { file: 'thermos.png', x: 32, y: -20, scale: 0.20 }
+      ]
+    },
+    {
+      key: 'iris',
+      num: '07',
+      name: 'Iris',
+      title: '07 · IRIS',
+      role: 'Frontend & Anti-Slop UI',
+      pod: 'dev',
+      podLabel: 'Dev & Systems',
+      x: 180,
+      y: 570,
+      accentColor: 0xf472b6,
+      hairColor: 0x831843,
+      skinColor: 0xffdfba,
+      deskAccessories: [
+        { file: 'rubiks-cube.png', x: 30, y: -16, scale: 0.14 },
+        { file: 'desk-lamp.png', x: -36, y: -24, scale: 0.13 }
+      ]
+    },
+    {
+      key: 'aegis',
+      num: '08',
+      name: 'Aegis',
+      title: '08 · AEGIS',
+      role: 'Security & Release Gates',
+      pod: 'dev',
+      podLabel: 'Dev & Systems',
+      x: 340,
+      y: 570,
+      accentColor: 0xfb923c,
+      hairColor: 0x7c2d12,
+      skinColor: 0xf5c6a5,
+      deskAccessories: [
+        { file: 'pen-holder.png', x: 32, y: -18, scale: 0.14 },
+        { file: 'headset_small.png', x: -30, y: -16, scale: 0.12 }
+      ]
+    },
+    {
+      key: 'sage',
+      num: '02',
+      name: 'Sage',
+      title: '02 · SAGE',
+      role: 'First Principles & PRD',
+      pod: 'intel',
+      podLabel: 'Research & Intel',
+      x: 860,
+      y: 410,
+      accentColor: 0x38bdf8,
+      hairColor: 0x0c4a6e,
+      skinColor: 0xffdfba,
+      deskAccessories: [
+        { file: 'magic-8-ball.png', x: 32, y: -16, scale: 0.14 }
+      ]
+    },
+    {
+      key: 'athena',
+      num: '03',
+      name: 'Athena',
+      title: '03 · ATHENA',
+      role: 'Formal Thesis & Citations',
+      pod: 'intel',
+      podLabel: 'Research & Intel',
+      x: 1020,
+      y: 410,
+      accentColor: 0xc084fc,
+      hairColor: 0x581c87,
+      skinColor: 0xf5c6a5,
+      deskAccessories: [
+        { file: 'desk-lamp.png', x: -36, y: -24, scale: 0.13 }
+      ]
+    },
+    {
+      key: 'nacht',
+      num: '09',
+      name: 'Nacht',
+      title: '09 · NACHT',
+      role: 'arXiv Radar & Recon',
+      pod: 'intel',
+      podLabel: 'Research & Intel',
+      x: 860,
+      y: 570,
+      accentColor: 0x818cf8,
+      hairColor: 0x1e1b4b,
+      skinColor: 0xe0ac69,
+      deskAccessories: [
+        { file: 'sunglasses.png', x: 26, y: -14, scale: 0.015 }
+      ]
+    },
+    {
+      key: 'ariadne',
+      num: '10',
+      name: 'Ariadne',
+      title: '10 · ARIADNE',
+      role: 'Obsidian PKM Vault',
+      pod: 'intel',
+      podLabel: 'Research & Intel',
+      x: 1020,
+      y: 570,
+      accentColor: 0x2dd4bf,
+      hairColor: 0x134e4a,
+      skinColor: 0xffdfba,
+      deskAccessories: [
+        { file: 'rubber-duck.png', x: 30, y: -16, scale: 0.14 }
+      ]
+    },
+    {
+      key: 'chronos',
+      num: '04',
+      name: 'Chronos',
+      title: '04 · CHRONOS',
+      role: 'Sprint Pacing & Alignment',
+      pod: 'command',
+      podLabel: 'Strategy & Pacing',
+      x: 430,
+      y: 200,
+      accentColor: 0xfbbf24,
+      hairColor: 0x78350f,
+      skinColor: 0xf5c6a5,
+      deskAccessories: [
+        { file: 'stapler.png', x: 30, y: -16, scale: 0.14 }
+      ]
+    }
+  ];
+
+  async function loadOfficeTextures() {
+    const loaded = {};
+    if (!window.PIXI) return loaded;
+
+    const promises = OFFICE_SPRITES.map(async file => {
+      try {
+        if (window.PIXI.Assets && typeof window.PIXI.Assets.load === 'function') {
+          const tex = await window.PIXI.Assets.load(`sprites/${file}`);
+          loaded[file] = tex;
+        } else {
+          loaded[file] = window.PIXI.Texture.from(`sprites/${file}`);
+        }
+      } catch (e) {
+        console.warn(`[OfficeView] Fallback for sprite ${file}:`, e);
+        try {
+          loaded[file] = window.PIXI.Texture.from(`sprites/${file}`);
+        } catch (_) {}
+      }
+    });
+
+    await Promise.all(promises);
+    return loaded;
+  }
+
+  function drawCharacterGraphic(gfx, station, isRunning, tick) {
+    gfx.clear();
+    const c = station.accentColor;
+    const skin = station.skinColor || 0xffdfba;
+    const hair = station.hairColor || 0x334155;
+
+    // Legs / Chair base
+    gfx.beginFill(0x1e293b);
+    gfx.drawRect(-8, 8, 7, 10);
+    gfx.drawRect(1, 8, 7, 10);
+    gfx.endFill();
+
+    // Torso / Shirt
+    gfx.beginFill(c);
+    gfx.drawRoundedRect(-9, -4, 18, 14, 3);
+    gfx.endFill();
+
+    // Collar / Neck
+    gfx.beginFill(skin);
+    gfx.drawRect(-3, -7, 6, 4);
+    gfx.endFill();
+
+    // Head
+    gfx.beginFill(skin);
+    gfx.drawRoundedRect(-8, -20, 16, 14, 3);
+    gfx.endFill();
+
+    // Hair
+    gfx.beginFill(hair);
+    gfx.drawRoundedRect(-9, -23, 18, 8, 3);
+    gfx.drawRect(-9, -19, 3, 5); // Sideburn L
+    gfx.drawRect(6, -19, 3, 5);  // Sideburn R
+    gfx.endFill();
+
+    // Eyes
+    gfx.beginFill(0x0f172a);
+    gfx.drawRect(-4, -15, 2, 3);
+    gfx.drawRect(2, -15, 2, 3);
+    gfx.endFill();
+
+    // Arms & Hands
+    if (isRunning) {
+      const armBobLeft = Math.sin(tick * 0.3) * 2;
+      const armBobRight = Math.cos(tick * 0.3) * 2;
+
+      gfx.beginFill(c);
+      gfx.drawRect(-12, -2 + armBobLeft, 4, 8);
+      gfx.drawRect(8, -2 + armBobRight, 4, 8);
+      gfx.endFill();
+
+      gfx.beginFill(skin);
+      gfx.drawRect(-12, 6 + armBobLeft, 4, 3);
+      gfx.drawRect(8, 6 + armBobRight, 4, 3);
+      gfx.endFill();
+    } else {
+      gfx.beginFill(c);
+      gfx.drawRect(-12, -2, 4, 9);
+      gfx.drawRect(8, -2, 4, 9);
+      gfx.endFill();
+
+      gfx.beginFill(skin);
+      gfx.drawRect(-12, 7, 4, 3);
+      gfx.drawRect(8, 7, 4, 3);
+      gfx.endFill();
+    }
+  }
+
+  function drawScreenGraphic(gfx, isRunning, tick) {
+    gfx.clear();
+    const screenW = 32;
+    const screenH = 20;
+
+    if (isRunning) {
+      gfx.beginFill(0x070b12);
+      gfx.drawRect(0, 0, screenW, screenH);
+      gfx.endFill();
+
+      const lineColors = [0x4ade80, 0x38bdf8, 0x4ade80, 0x22d3ee];
+      const offset = Math.floor((tick * 0.1) % 4);
+
+      for (let i = 0; i < 4; i++) {
+        const y = 3 + i * 4;
+        const lw = 8 + ((i + offset) % 3) * 7;
+        const col = lineColors[(i + offset) % lineColors.length];
+        gfx.beginFill(col, 0.85);
+        gfx.drawRect(3, y, Math.min(lw, 24), 2);
+        gfx.endFill();
+      }
+    } else {
+      gfx.beginFill(0x0b101d);
+      gfx.drawRect(0, 0, screenW, screenH);
+      gfx.endFill();
+
+      gfx.beginFill(0x334155, 0.7);
+      gfx.drawRect(12, 8, 8, 4);
+      gfx.endFill();
+    }
+  }
+
+  function drawTaskBubble(entity, taskText, accentColor) {
+    const { bubbleBg, bubbleDot, bubbleText, taskBubble } = entity;
+    bubbleText.text = taskText;
+
+    const textW = Math.max(bubbleText.width, 85);
+    const bubbleW = textW + 28;
+    const bubbleH = 24;
+    const halfW = bubbleW / 2;
+
+    bubbleText.x = -halfW + 18;
+    bubbleText.y = -bubbleH / 2 + 5;
+
+    bubbleBg.clear();
+    bubbleBg.lineStyle(1.5, 0x4ade80, 0.9);
+    bubbleBg.beginFill(0x0e131f, 0.96);
+    bubbleBg.drawRoundedRect(-halfW, -bubbleH / 2, bubbleW, bubbleH, 6);
+
+    // Downward speech pointer triangle
+    bubbleBg.moveTo(-4, bubbleH / 2);
+    bubbleBg.lineTo(0, bubbleH / 2 + 6);
+    bubbleBg.lineTo(4, bubbleH / 2);
+    bubbleBg.closePath();
+    bubbleBg.endFill();
+
+    // Pulse dot
+    bubbleDot.clear();
+    bubbleDot.beginFill(0x4ade80);
+    bubbleDot.drawCircle(-halfW + 9, 0, 3.5);
+    bubbleDot.endFill();
+
+    taskBubble.visible = true;
+  }
+
+  function buildStationEntity(station, textures) {
+    const container = new PIXI.Container();
+    container.x = station.x;
+    container.y = station.y;
+    container.sortableChildren = true;
+    container.interactive = true;
+    container.buttonMode = true;
+    container.cursor = 'pointer';
+
+    // 1. Desk Selection / Hover Box
+    const hoverBox = new PIXI.Graphics();
+    hoverBox.lineStyle(1.5, station.accentColor, 0);
+    hoverBox.beginFill(station.accentColor, 0);
+    const boxW = station.isBoss ? 160 : 130;
+    const boxH = station.isBoss ? 120 : 100;
+    hoverBox.drawRoundedRect(-boxW / 2, -boxH / 2, boxW, boxH, 8);
+    hoverBox.endFill();
+    hoverBox.zIndex = 1;
+    container.addChild(hoverBox);
+
+    // 2. Boss Rug if boss
+    if (station.isBoss && textures['boss-rug.png']) {
+      const rug = new PIXI.Sprite(textures['boss-rug.png']);
+      rug.anchor.set(0.5);
+      rug.scale.set(0.185);
+      rug.x = 0;
+      rug.y = 10;
+      rug.zIndex = 2;
+      container.addChild(rug);
+    }
+
+    // 3. Chair
+    if (textures['chair.png']) {
+      const chair = new PIXI.Sprite(textures['chair.png']);
+      chair.anchor.set(0.5);
+      const chairScale = station.isBoss ? 0.088 : 0.076;
+      chair.scale.set(chairScale);
+      chair.x = 0;
+      chair.y = -22;
+      chair.zIndex = 5;
+      container.addChild(chair);
+    }
+
+    // 4. Seated Character
+    const charContainer = new PIXI.Container();
+    charContainer.x = 0;
+    charContainer.y = -18;
+    charContainer.zIndex = 8;
+
+    const charGfx = new PIXI.Graphics();
+    drawCharacterGraphic(charGfx, station, false, 0);
+    charContainer.addChild(charGfx);
+    container.addChild(charContainer);
+
+    // 5. Desk Sprite
+    if (textures['desk.png']) {
+      const desk = new PIXI.Sprite(textures['desk.png']);
+      desk.anchor.set(0.5);
+      const deskScale = station.isBoss ? 0.115 : 0.092;
+      desk.scale.set(deskScale);
+      desk.x = 0;
+      desk.y = 8;
+      desk.zIndex = 10;
+      container.addChild(desk);
+    }
+
+    // 6. Monitor & Terminal Screen
+    const monitorContainer = new PIXI.Container();
+    monitorContainer.x = 0;
+    monitorContainer.y = -10;
+    monitorContainer.zIndex = 12;
+
+    if (textures['monitor_back.png']) {
+      const monitorBack = new PIXI.Sprite(textures['monitor_back.png']);
+      monitorBack.anchor.set(0.5);
+      monitorBack.scale.set(station.isBoss ? 0.065 : 0.055);
+      monitorBack.x = 0;
+      monitorBack.y = 0;
+      monitorContainer.addChild(monitorBack);
+    }
+
+    const screenGfx = new PIXI.Graphics();
+    screenGfx.x = -16;
+    screenGfx.y = -14;
+    monitorContainer.addChild(screenGfx);
+    container.addChild(monitorContainer);
+
+    // 7. Keyboard
+    if (textures['keyboard_back.png']) {
+      const keyboard = new PIXI.Sprite(textures['keyboard_back.png']);
+      keyboard.anchor.set(0.5);
+      keyboard.scale.set(station.isBoss ? 0.045 : 0.038);
+      keyboard.x = 0;
+      keyboard.y = 14;
+      keyboard.zIndex = 13;
+      container.addChild(keyboard);
+    }
+
+    // 8. Station Accessories
+    if (station.deskAccessories && station.deskAccessories.length > 0) {
+      station.deskAccessories.forEach(acc => {
+        if (textures[acc.file]) {
+          const accSprite = new PIXI.Sprite(textures[acc.file]);
+          accSprite.anchor.set(0.5);
+          accSprite.scale.set(acc.scale);
+          accSprite.x = acc.x;
+          accSprite.y = acc.y;
+          accSprite.zIndex = 14;
+          container.addChild(accSprite);
+        }
+      });
+    }
+
+    // 9. Nameplate Container
+    const nameplate = new PIXI.Container();
+    nameplate.x = 0;
+    nameplate.y = -62;
+    nameplate.zIndex = 30;
+
+    const nameBg = new PIXI.Graphics();
+    nameplate.addChild(nameBg);
+
+    const nameText = new PIXI.Text(station.title, {
+      fontFamily: 'JetBrains Mono, monospace',
+      fontSize: 10,
+      fontWeight: 'bold',
+      fill: 0xffffff,
+      align: 'center'
+    });
+    nameText.anchor.set(0.5);
+    nameText.y = -2;
+    nameplate.addChild(nameText);
+
+    const statusPill = new PIXI.Text('IDLE', {
+      fontFamily: 'JetBrains Mono, monospace',
+      fontSize: 8,
+      fontWeight: 'bold',
+      fill: 0x94a3b8,
+      align: 'center'
+    });
+    statusPill.anchor.set(0.5);
+    statusPill.y = 11;
+    nameplate.addChild(statusPill);
+
+    function updateNameplateBg(statusText, statusColor) {
+      nameBg.clear();
+      nameBg.lineStyle(1, 0x262a34, 0.95);
+      nameBg.beginFill(0x0a0e17, 0.95);
+      nameBg.drawRoundedRect(-48, -13, 96, 32, 6);
+      nameBg.endFill();
+
+      nameBg.lineStyle(1, statusColor, 0.35);
+      nameBg.beginFill(statusColor, 0.15);
+      nameBg.drawRoundedRect(-24, 5, 48, 12, 4);
+      nameBg.endFill();
+    }
+    updateNameplateBg('IDLE', 0x94a3b8);
+    container.addChild(nameplate);
+
+    // 10. Task Speech Bubble
+    const taskBubble = new PIXI.Container();
+    taskBubble.x = 0;
+    taskBubble.y = -98;
+    taskBubble.zIndex = 40;
+    taskBubble.visible = false;
+
+    const bubbleBg = new PIXI.Graphics();
+    taskBubble.addChild(bubbleBg);
+
+    const bubbleDot = new PIXI.Graphics();
+    taskBubble.addChild(bubbleDot);
+
+    const bubbleText = new PIXI.Text('', {
+      fontFamily: 'JetBrains Mono, monospace',
+      fontSize: 9,
+      fontWeight: 'bold',
+      fill: 0xffffff,
+      align: 'left'
+    });
+    taskBubble.addChild(bubbleText);
+    container.addChild(taskBubble);
+
+    // Interactions
+    container.on('pointerover', () => {
+      hoverBox.clear();
+      hoverBox.lineStyle(1.5, station.accentColor, 0.9);
+      hoverBox.beginFill(station.accentColor, 0.08);
+      hoverBox.drawRoundedRect(-boxW / 2, -boxH / 2, boxW, boxH, 8);
+      hoverBox.endFill();
+    });
+
+    container.on('pointerout', () => {
+      hoverBox.clear();
+      hoverBox.lineStyle(1.5, station.accentColor, 0);
+      hoverBox.beginFill(station.accentColor, 0);
+      hoverBox.drawRoundedRect(-boxW / 2, -boxH / 2, boxW, boxH, 8);
+      hoverBox.endFill();
+    });
+
+    container.on('pointertap', () => {
+      if (typeof selectNode === 'function') selectNode(station.key);
+      if (typeof openAgentDetailModal === 'function') openAgentDetailModal(station.key);
+    });
+
+    return {
+      container,
+      charContainer,
+      charGfx,
+      screenGfx,
+      nameplate,
+      nameText,
+      statusPill,
+      updateNameplateBg,
+      taskBubble,
+      bubbleBg,
+      bubbleDot,
+      bubbleText,
+      station
+    };
+  }
+
+  function buildOfficeEnvironment(world, textures, width, height) {
+    const floorLayer = new PIXI.Container();
+    floorLayer.zIndex = 1;
+    world.addChild(floorLayer);
+
+    // Floor Tiling
+    if (textures['floor-tile.png']) {
+      const floorTile = new PIXI.TilingSprite(
+        textures['floor-tile.png'],
+        width,
+        height - 48
+      );
+      floorTile.tileScale.set(0.42);
+      floorTile.tint = 0x181c2b;
+      floorTile.x = 0;
+      floorTile.y = 48;
+      floorLayer.addChild(floorTile);
+    } else {
+      const floorFallback = new PIXI.Graphics();
+      floorFallback.beginFill(0x0f131f);
+      floorFallback.drawRect(0, 48, width, height - 48);
+      floorFallback.endFill();
+      floorLayer.addChild(floorFallback);
+    }
+
+    // Zone Mats & Hairline Boundaries
+    const zonesGfx = new PIXI.Graphics();
+
+    // West Pod (Dev & Systems): Zephyr, Daemon, Iris, Aegis
+    zonesGfx.lineStyle(1.5, 0x223654, 0.85);
+    zonesGfx.beginFill(0x101726, 0.7);
+    zonesGfx.drawRoundedRect(70, 320, 360, 340, 12);
+    zonesGfx.endFill();
+
+    // East Pod (Research & Intelligence): Sage, Athena, Nacht, Ariadne
+    zonesGfx.lineStyle(1.5, 0x382d54, 0.85);
+    zonesGfx.beginFill(0x151226, 0.7);
+    zonesGfx.drawRoundedRect(770, 320, 360, 340, 12);
+    zonesGfx.endFill();
+
+    // North Pod (Chronos & Fleet Strategy Table)
+    zonesGfx.lineStyle(1.5, 0x2e3547, 0.85);
+    zonesGfx.beginFill(0x111624, 0.7);
+    zonesGfx.drawRoundedRect(350, 100, 500, 190, 12);
+    zonesGfx.endFill();
+
+    // Northwest Lounge / Breakroom
+    zonesGfx.lineStyle(1.5, 0x1f2e42, 0.85);
+    zonesGfx.beginFill(0x0e1724, 0.7);
+    zonesGfx.drawRoundedRect(50, 70, 270, 210, 12);
+    zonesGfx.endFill();
+
+    // Northeast Print / Intel Archives
+    zonesGfx.lineStyle(1.5, 0x2e233d, 0.85);
+    zonesGfx.beginFill(0x141021, 0.7);
+    zonesGfx.drawRoundedRect(880, 70, 270, 210, 12);
+    zonesGfx.endFill();
+
+    floorLayer.addChild(zonesGfx);
+
+    // Zone Header Sign Labels
+    const makeZoneLabel = (text, x, y, color) => {
+      const lbl = new PIXI.Text(text, {
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: 9,
+        fontWeight: 'bold',
+        fill: color || 0x64748b,
+        letterSpacing: 1.5
+      });
+      lbl.x = x;
+      lbl.y = y;
+      floorLayer.addChild(lbl);
+    };
+
+    makeZoneLabel('DEV & SYSTEMS POD · FASTAPI & SRE', 85, 330, 0x38bdf8);
+    makeZoneLabel('RESEARCH & INTELLIGENCE POD · PRD & PKM', 785, 330, 0xa78bfa);
+    makeZoneLabel('STRATEGY & PACING POD · DAILY FLEET SYNC', 365, 110, 0xfbbf24);
+    makeZoneLabel('AMENITIES & COFFEE LOUNGE', 65, 80, 0x4ade80);
+    makeZoneLabel('PRINT & INTEL ARCHIVES', 895, 80, 0xc084fc);
+
+    // Conference Table in Strategy Pod
+    const confTableGfx = new PIXI.Graphics();
+    confTableGfx.lineStyle(2, 0x45352c, 0.9);
+    confTableGfx.beginFill(0x271e1b);
+    confTableGfx.drawRoundedRect(570, 160, 200, 70, 20);
+    confTableGfx.endFill();
+
+    if (textures['chair.png']) {
+      const chairCoords = [
+        { x: 620, y: 145 },
+        { x: 720, y: 145 },
+        { x: 620, y: 245 },
+        { x: 720, y: 245 }
+      ];
+      chairCoords.forEach(pos => {
+        const c = new PIXI.Sprite(textures['chair.png']);
+        c.anchor.set(0.5);
+        c.scale.set(0.065);
+        c.x = pos.x;
+        c.y = pos.y;
+        floorLayer.addChild(c);
+      });
+    }
+    floorLayer.addChild(confTableGfx);
+
+    // Documents on conference table
+    const confDocs = new PIXI.Graphics();
+    confDocs.beginFill(0xe2e8f0, 0.85);
+    confDocs.drawRect(645, 185, 18, 22);
+    confDocs.drawRect(675, 180, 20, 24);
+    confDocs.endFill();
+    confDocs.lineStyle(1, 0x38bdf8, 0.8);
+    confDocs.drawCircle(715, 195, 6);
+    floorLayer.addChild(confDocs);
+
+    // Kitchen Counter & Coffee Station
+    const counterGfx = new PIXI.Graphics();
+    counterGfx.lineStyle(1.5, 0x334155, 0.9);
+    counterGfx.beginFill(0x182030);
+    counterGfx.drawRoundedRect(75, 115, 130, 42, 6);
+    counterGfx.endFill();
+    floorLayer.addChild(counterGfx);
+
+    if (textures['coffee-machine.png']) {
+      const coffeeMach = new PIXI.Sprite(textures['coffee-machine.png']);
+      coffeeMach.anchor.set(0.5);
+      coffeeMach.scale.set(0.075);
+      coffeeMach.x = 110;
+      coffeeMach.y = 130;
+      floorLayer.addChild(coffeeMach);
+    }
+
+    if (textures['coffee-mug.png']) {
+      const mug = new PIXI.Sprite(textures['coffee-mug.png']);
+      mug.anchor.set(0.5);
+      mug.scale.set(0.022);
+      mug.x = 145;
+      mug.y = 130;
+      floorLayer.addChild(mug);
+    }
+
+    if (textures['watercooler.png']) {
+      const cooler = new PIXI.Sprite(textures['watercooler.png']);
+      cooler.anchor.set(0.5);
+      cooler.scale.set(0.095);
+      cooler.x = 240;
+      cooler.y = 130;
+      floorLayer.addChild(cooler);
+    }
+
+    // Printer Station
+    const printerStandGfx = new PIXI.Graphics();
+    printerStandGfx.lineStyle(1.5, 0x334155, 0.9);
+    printerStandGfx.beginFill(0x182030);
+    printerStandGfx.drawRoundedRect(900, 115, 120, 42, 6);
+    printerStandGfx.endFill();
+    floorLayer.addChild(printerStandGfx);
+
+    if (textures['old-printer.png']) {
+      const printer = new PIXI.Sprite(textures['old-printer.png']);
+      printer.anchor.set(0.5);
+      printer.scale.set(0.075);
+      printer.x = 955;
+      printer.y = 125;
+      floorLayer.addChild(printer);
+    }
+
+    // Decorative Plants
+    if (textures['plant.png']) {
+      const plantLocations = [
+        { x: 75, y: 240, scale: 0.08 },
+        { x: 290, y: 130, scale: 0.08 },
+        { x: 1100, y: 130, scale: 0.08 },
+        { x: 1100, y: 240, scale: 0.08 },
+        { x: 75, y: 620, scale: 0.08 },
+        { x: 1100, y: 620, scale: 0.08 },
+        { x: 520, y: 705, scale: 0.075 },
+        { x: 680, y: 705, scale: 0.075 }
+      ];
+      plantLocations.forEach(p => {
+        const pl = new PIXI.Sprite(textures['plant.png']);
+        pl.anchor.set(0.5);
+        pl.scale.set(p.scale);
+        pl.x = p.x;
+        pl.y = p.y;
+        floorLayer.addChild(pl);
+      });
+    }
+
+    // South Elevator Entrance
+    if (textures['elevator_frame.png']) {
+      const elFrame = new PIXI.Sprite(textures['elevator_frame.png']);
+      elFrame.anchor.set(0.5);
+      elFrame.scale.set(0.135);
+      elFrame.x = 600;
+      elFrame.y = 695;
+      floorLayer.addChild(elFrame);
+    }
+
+    if (textures['elevator_door.png']) {
+      const elDoor = new PIXI.Sprite(textures['elevator_door.png']);
+      elDoor.anchor.set(0.5);
+      elDoor.scale.set(0.115);
+      elDoor.x = 600;
+      elDoor.y = 698;
+      floorLayer.addChild(elDoor);
+    }
+
+    // Upper North Wall Banner
+    const wallLayer = new PIXI.Container();
+    wallLayer.zIndex = 50;
+    world.addChild(wallLayer);
+
+    const wallGfx = new PIXI.Graphics();
+    wallGfx.beginFill(0x0c0f18);
+    wallGfx.drawRect(0, 0, width, 48);
+    wallGfx.endFill();
+
+    wallGfx.lineStyle(1.5, 0x262a34, 1);
+    wallGfx.moveTo(0, 48);
+    wallGfx.lineTo(width, 48);
+    wallLayer.addChild(wallGfx);
+
+    if (textures['employee-of-month.png']) {
+      const eom = new PIXI.Sprite(textures['employee-of-month.png']);
+      eom.anchor.set(0.5);
+      eom.scale.set(0.042);
+      eom.x = 600;
+      eom.y = 24;
+      wallLayer.addChild(eom);
+    }
+
+    if (textures['wall-outlet.png']) {
+      [160, 380, 820, 1040].forEach(ox => {
+        const outlet = new PIXI.Sprite(textures['wall-outlet.png']);
+        outlet.anchor.set(0.5);
+        outlet.scale.set(0.05);
+        outlet.x = ox;
+        outlet.y = 36;
+        wallLayer.addChild(outlet);
+      });
+    }
+
+    const wallSign = new PIXI.Text('THE LUMINARIES CONSTELLATION · AUTONOMOUS AGENT HEADQUARTERS', {
+      fontFamily: 'JetBrains Mono, monospace',
+      fontSize: 10,
+      fontWeight: 'bold',
+      fill: 0x64748b,
+      letterSpacing: 2
+    });
+    wallSign.anchor.set(0, 0.5);
+    wallSign.x = 20;
+    wallSign.y = 24;
+    wallLayer.addChild(wallSign);
+  }
+
+  function zoomOffice(delta) {
+    if (!officeWorldContainer) return;
+    officeZoomLevel = Math.max(0.6, Math.min(2.2, officeZoomLevel + delta));
+    officeWorldContainer.scale.set(officeZoomLevel);
+  }
+
+  function resetOfficeView() {
+    if (!officeWorldContainer) return;
+    officeZoomLevel = 1.0;
+    officeWorldContainer.scale.set(1.0);
+    officeWorldContainer.x = 0;
+    officeWorldContainer.y = 0;
+  }
+
+  function toggleOfficeLabels() {
+    officeShowLabels = !officeShowLabels;
+    const btnText = document.getElementById('office-labels-text');
+    if (btnText) {
+      btnText.textContent = officeShowLabels ? 'Labels ON' : 'Labels OFF';
+    }
+    updateOfficeTelemetry();
+  }
+
+  function filterOfficePod(podName) {
+    if (!officeWorldContainer) return;
+    officeSelectedPod = podName;
+
+    document.querySelectorAll('.office-filter-btn').forEach(btn => {
+      if (btn.getAttribute('data-pod') === podName) {
+        btn.className = 'office-filter-btn px-2.5 py-1 rounded bg-[#1c1f29] text-[#c0c1ff] border border-[#8083ff]/30 transition';
+      } else {
+        btn.className = 'office-filter-btn px-2 py-1 rounded text-slate-400 hover:text-white transition';
+      }
+    });
+
+    if (podName === 'command') {
+      officeZoomLevel = 1.35;
+      officeWorldContainer.scale.set(1.35);
+      officeWorldContainer.x = -200;
+      officeWorldContainer.y = -100;
+    } else if (podName === 'dev') {
+      officeZoomLevel = 1.35;
+      officeWorldContainer.scale.set(1.35);
+      officeWorldContainer.x = 50;
+      officeWorldContainer.y = -180;
+    } else if (podName === 'intel') {
+      officeZoomLevel = 1.35;
+      officeWorldContainer.scale.set(1.35);
+      officeWorldContainer.x = -500;
+      officeWorldContainer.y = -180;
+    } else {
+      resetOfficeView();
+    }
+  }
+
+  function setupOfficeControls() {
+    const zoomInBtn = document.getElementById('office-zoom-in');
+    if (zoomInBtn) zoomInBtn.onclick = () => zoomOffice(0.15);
+
+    const zoomOutBtn = document.getElementById('office-zoom-out');
+    if (zoomOutBtn) zoomOutBtn.onclick = () => zoomOffice(-0.15);
+
+    const resetBtn = document.getElementById('office-zoom-reset');
+    if (resetBtn) resetBtn.onclick = () => resetOfficeView();
+
+    const toggleLabelsBtn = document.getElementById('office-toggle-labels');
+    if (toggleLabelsBtn) toggleLabelsBtn.onclick = () => toggleOfficeLabels();
+
+    document.querySelectorAll('.office-filter-btn').forEach(btn => {
+      btn.onclick = () => {
+        const pod = btn.getAttribute('data-pod');
+        filterOfficePod(pod);
+      };
+    });
+  }
+
+  function updateOfficeTelemetry() {
+    if (!officePixiInitialized) return;
+
+    let activeCount = 0;
+    let idleCount = 0;
+
+    const liveTasks = (state.tasks || []).filter(t => {
+      const s = String(t.status || '').toUpperCase();
+      return s === 'IN_PROGRESS' || s === 'RUNNING' || s === 'ACTIVE';
+    });
+    const activeTasksCount = liveTasks.length;
+
+    OFFICE_STATIONS.forEach(station => {
+      const entity = officeEntities[station.key];
+      if (!entity) return;
+
+      const agent = state.agents[station.key] || {};
+      const statusStr = String(agent.status || '').toUpperCase();
+      const isRunning = agent.running === true || statusStr === 'RUNNING' || statusStr === 'ACTIVE';
+
+      if (isRunning) {
+        activeCount++;
+        entity.statusPill.text = 'RUNNING';
+        entity.statusPill.style.fill = 0x4ade80;
+        entity.updateNameplateBg('RUNNING', 0x4ade80);
+
+        const agentTask = liveTasks.find(t => 
+          (t.to && (t.to.toLowerCase() === station.key || t.to.toLowerCase() === station.name.toLowerCase())) ||
+          (t.from && (t.from.toLowerCase() === station.key || t.from.toLowerCase() === station.name.toLowerCase()))
+        ) || liveTasks[0];
+
+        if (agentTask) {
+          const taskId = agentTask.id || `TSK-${station.num}`;
+          const title = (agentTask.intent || agentTask.title || station.role || 'Executing').slice(0, 22);
+          drawTaskBubble(entity, `${taskId}: ${title}`, station.accentColor);
+        } else {
+          drawTaskBubble(entity, `TSK-${station.num}: ${station.role.slice(0, 20)}`, station.accentColor);
+        }
+      } else {
+        idleCount++;
+        const idleText = statusStr === 'STANDBY' ? 'STANDBY' : 'IDLE';
+        const idleColor = statusStr === 'STANDBY' ? 0x38bdf8 : 0x94a3b8;
+        entity.statusPill.text = idleText;
+        entity.statusPill.style.fill = idleColor;
+        entity.updateNameplateBg(idleText, idleColor);
+        entity.taskBubble.visible = false;
+      }
+
+      entity.nameplate.visible = officeShowLabels;
+    });
+
+    const activeHud = document.getElementById('office-hud-active');
+    if (activeHud) activeHud.textContent = `${activeCount} Working`;
+
+    const idleHud = document.getElementById('office-hud-idle');
+    if (idleHud) idleHud.textContent = `${idleCount} Relaxed`;
+
+    const tasksHud = document.getElementById('office-hud-tasks');
+    if (tasksHud) tasksHud.textContent = `${activeTasksCount} Live Tasks`;
+  }
+
+  async function renderOfficeSpace() {
+    if (officePixiInitialized) {
+      updateOfficeTelemetry();
+      return;
+    }
+
+    if (officePixiLoading) return;
+    officePixiLoading = true;
+
+    const mount = document.getElementById('office-pixi-mount');
+    const loader = document.getElementById('office-canvas-loader');
+
+    if (!mount || !window.PIXI) {
+      console.error('[OfficeView] Mount or PIXI unavailable');
+      if (loader) loader.innerHTML = '<span class="text-rose-400 font-mono text-xs">PixiJS library failed to load</span>';
+      officePixiLoading = false;
+      return;
+    }
+
+    try {
+      setupOfficeControls();
+
+      // Set scale mode to nearest neighbor for crisp pixel art
+      if (window.PIXI.BaseTexture && window.PIXI.BaseTexture.defaultOptions) {
+        window.PIXI.BaseTexture.defaultOptions.scaleMode = window.PIXI.SCALE_MODES ? window.PIXI.SCALE_MODES.NEAREST : 1;
+      }
+
+      // 1. Load Textures
+      officeTextures = await loadOfficeTextures();
+
+      // 2. Initialize PixiJS Application
+      const WORLD_WIDTH = 1200;
+      const WORLD_HEIGHT = 760;
+
+      officePixiApp = new PIXI.Application({
+        width: WORLD_WIDTH,
+        height: WORLD_HEIGHT,
+        backgroundColor: 0x0a0e17,
+        resolution: Math.min(window.devicePixelRatio || 1, 2),
+        autoDensity: true,
+        antialias: true
+      });
+
+      officePixiApp.renderer.view.style.width = '100%';
+      officePixiApp.renderer.view.style.height = 'auto';
+      officePixiApp.renderer.view.style.maxHeight = '760px';
+      officePixiApp.renderer.view.style.display = 'block';
+
+      mount.innerHTML = '';
+      mount.appendChild(officePixiApp.renderer.view);
+
+      // 3. Build World Container
+      officeWorldContainer = new PIXI.Container();
+      officeWorldContainer.sortableChildren = true;
+      officePixiApp.stage.addChild(officeWorldContainer);
+
+      // 4. Build Office Environment
+      buildOfficeEnvironment(officeWorldContainer, officeTextures, WORLD_WIDTH, WORLD_HEIGHT);
+
+      // 5. Build 10 Stations
+      OFFICE_STATIONS.forEach(station => {
+        const entity = buildStationEntity(station, officeTextures);
+        entity.container.zIndex = 20;
+        officeWorldContainer.addChild(entity.container);
+        officeEntities[station.key] = entity;
+      });
+
+      // 6. Setup Animation Ticker
+      officePixiApp.ticker.add((delta) => {
+        officeAnimationTicker += delta;
+        OFFICE_STATIONS.forEach(station => {
+          const entity = officeEntities[station.key];
+          if (!entity) return;
+
+          const agent = state.agents[station.key] || {};
+          const statusStr = String(agent.status || '').toUpperCase();
+          const isRunning = agent.running === true || statusStr === 'RUNNING' || statusStr === 'ACTIVE';
+
+          drawCharacterGraphic(entity.charGfx, station, isRunning, officeAnimationTicker);
+          drawScreenGraphic(entity.screenGfx, isRunning, officeAnimationTicker);
+
+          if (entity.taskBubble.visible) {
+            entity.bubbleDot.alpha = 0.4 + Math.abs(Math.sin(officeAnimationTicker * 0.12)) * 0.6;
+          }
+        });
+      });
+
+      // Mouse drag panning on background
+      let isDragging = false;
+      let dragStart = { x: 0, y: 0 };
+      let containerStart = { x: 0, y: 0 };
+
+      officeWorldContainer.interactive = true;
+      officeWorldContainer.on('pointerdown', (e) => {
+        if (e.target === officeWorldContainer) {
+          isDragging = true;
+          dragStart = { x: e.data.global.x, y: e.data.global.y };
+          containerStart = { x: officeWorldContainer.x, y: officeWorldContainer.y };
+        }
+      });
+
+      officeWorldContainer.on('pointermove', (e) => {
+        if (isDragging) {
+          const dx = e.data.global.x - dragStart.x;
+          const dy = e.data.global.y - dragStart.y;
+          officeWorldContainer.x = containerStart.x + dx;
+          officeWorldContainer.y = containerStart.y + dy;
+        }
+      });
+
+      officeWorldContainer.on('pointerup', () => { isDragging = false; });
+      officeWorldContainer.on('pointerupoutside', () => { isDragging = false; });
+
+      // Mouse wheel zoom
+      const canvasWrapper = document.getElementById('office-canvas-wrapper');
+      if (canvasWrapper) {
+        canvasWrapper.onwheel = (e) => {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? -0.1 : 0.1;
+          zoomOffice(delta);
+        };
+      }
+
+      officePixiInitialized = true;
+      officePixiLoading = false;
+
+      if (loader) {
+        loader.classList.add('hidden');
+      }
+
+      updateOfficeTelemetry();
+    } catch (err) {
+      console.error('[OfficeView] Failed to initialize PixiJS Office:', err);
+      if (loader) {
+        loader.innerHTML = `<span class="text-rose-400 font-mono text-xs">Error initializing office: ${escapeHtml(err.message)}</span>`;
+      }
+      officePixiLoading = false;
+    }
+  }
+
   // 9. VIEW SWITCHING & NAVIGATION
-  const VIEWS = ['overview', 'roster', 'telemetry', 'vps', 'stream', 'incidents', 'topology'];
+  const VIEWS = ['overview', 'roster', 'telemetry', 'vps', 'stream', 'incidents', 'topology', 'office'];
   const VIEW_TITLES = {
     overview: 'NEURAL OVERVIEW & SOVEREIGN TOPOLOGY',
     roster: 'FLEET ROSTER & LUMINARIES',
@@ -2252,7 +3363,8 @@
     vps: 'LINUX VPS HOST & SRE TELEMETRY',
     stream: 'EXECUTION AUDIT LOGS & DISPATCH STREAM',
     incidents: 'INCIDENTS & CIRCUIT BREAKERS',
-    topology: 'ARCHITECTURAL TOPOLOGY & RELATION EDGES'
+    topology: 'ARCHITECTURAL TOPOLOGY & RELATION EDGES',
+    office: 'SOVEREIGN OFFICE SPACE · PIXEL TELEMETRY'
   };
 
   function switchView(viewId) {
@@ -2305,6 +3417,7 @@
     else if (target === 'stream') renderStream();
     else if (target === 'incidents') renderIncidents();
     else if (target === 'topology') renderTopology();
+    else if (target === 'office') renderOfficeSpace();
 
     if (target !== 'vps') {
       stopVPSPolling();
@@ -2379,6 +3492,7 @@
     else if (state.currentView === 'stream') renderStream();
     else if (state.currentView === 'incidents') renderIncidents();
     else if (state.currentView === 'topology') renderTopology();
+    else if (state.currentView === 'office') updateOfficeTelemetry();
 
     // Update sidebar metrics badges
     const tasksCountBadge = document.getElementById('nav-tasks-count');
@@ -2582,6 +3696,8 @@
   window.renderStream = renderStream;
   window.renderIncidents = renderIncidents;
   window.renderTopology = renderTopology;
+  window.renderOfficeSpace = renderOfficeSpace;
+  window.updateOfficeTelemetry = updateOfficeTelemetry;
 
   // INITIALIZATION
   async function init() {
