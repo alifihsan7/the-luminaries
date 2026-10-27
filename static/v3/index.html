@@ -139,13 +139,6 @@
             <span>Neural Handoffs</span>
           </div>
         </button>
-        <button type="button" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-[#181b25] transition-all" data-view="office" data-nav="office" id="nav-btn-office">
-          <div class="flex items-center gap-2.5">
-            <span class="material-symbols-outlined text-[18px]">apartment</span>
-            <span class="tracking-wide">Office Space</span>
-          </div>
-          <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#8083ff]/10 text-[#c0c1ff] border border-[#8083ff]/20">10 AGENTS</span>
-        </button>
       </nav>
 
       <!-- Sidebar Footer Telemetry -->
@@ -730,140 +723,6 @@
           </div>
         </section>
 
-        <!-- VIEW 8: SOVEREIGN OFFICE SPACE (PIXIJS CANVAS) -->
-        <section id="view-office" class="view view-panel hidden p-4 lg:p-6 space-y-6" aria-labelledby="office-view-title">
-          <!-- View Header Strip -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#262a34]">
-            <div class="flex items-center gap-2.5">
-              <span class="material-symbols-outlined text-[#8083ff] text-[24px]">apartment</span>
-              <div>
-                <div class="flex items-center gap-2">
-                  <h2 id="office-view-title" class="text-base font-bold text-white font-mono tracking-tight uppercase">SOVEREIGN OFFICE SPACE</h2>
-                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#8083ff]/15 text-[#c0c1ff] border border-[#8083ff]/30 font-semibold">PIXEL TELEMETRY</span>
-                </div>
-                <p class="text-[11px] text-slate-400 font-mono">Live 2D Workspace · 10 Sovereign Luminaries at Work · Real-time State &amp; Task Dispatches</p>
-              </div>
-            </div>
-
-            <!-- View Action Controls & Zoom Bar -->
-            <div class="flex items-center gap-2 flex-wrap">
-              <!-- Pod Filter Pills -->
-              <div class="hidden md:flex items-center gap-1 bg-[#0a0e17] p-1 rounded-lg border border-[#262a34] text-[11px] font-mono">
-                <button type="button" id="office-filter-all" class="office-filter-btn px-2.5 py-1 rounded bg-[#1c1f29] text-[#c0c1ff] border border-[#8083ff]/30 transition" data-pod="all">All Stations</button>
-                <button type="button" id="office-filter-command" class="office-filter-btn px-2 py-1 rounded text-slate-400 hover:text-white transition" data-pod="command">Command</button>
-                <button type="button" id="office-filter-dev" class="office-filter-btn px-2 py-1 rounded text-slate-400 hover:text-white transition" data-pod="dev">Dev &amp; Systems</button>
-                <button type="button" id="office-filter-intel" class="office-filter-btn px-2 py-1 rounded text-slate-400 hover:text-white transition" data-pod="intel">Research</button>
-              </div>
-
-              <!-- Zoom Controls -->
-              <div class="flex items-center gap-1 bg-[#0a0e17] p-1 rounded-lg border border-[#262a34]">
-                <button type="button" id="office-zoom-in" class="p-1.5 rounded hover:bg-[#262a34] text-slate-300 hover:text-white transition" title="Zoom In" aria-label="Zoom in Office Space">
-                  <span class="material-symbols-outlined text-[16px]">zoom_in</span>
-                </button>
-                <button type="button" id="office-zoom-out" class="p-1.5 rounded hover:bg-[#262a34] text-slate-300 hover:text-white transition" title="Zoom Out" aria-label="Zoom out Office Space">
-                  <span class="material-symbols-outlined text-[16px]">zoom_out</span>
-                </button>
-                <button type="button" id="office-zoom-reset" class="p-1.5 rounded hover:bg-[#262a34] text-slate-300 hover:text-white transition" title="Reset View" aria-label="Reset Office Space View">
-                  <span class="material-symbols-outlined text-[16px]">restart_alt</span>
-                </button>
-              </div>
-
-              <!-- Label Toggle -->
-              <button type="button" id="office-toggle-labels" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#181b25] hover:bg-[#262a34] border border-[#262a34] text-xs font-mono text-slate-200 hover:text-white transition" title="Toggle Nameplates">
-                <span class="material-symbols-outlined text-[16px] text-[#4cd7f6]">badge</span>
-                <span id="office-labels-text">Labels ON</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Office HUD Telemetry Bar -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#181b25] border border-[#262a34] rounded-xl p-3 sm:p-4">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-[#8083ff]/10 border border-[#8083ff]/20 flex items-center justify-center text-[#c0c1ff]">
-                <span class="material-symbols-outlined text-[18px]">group</span>
-              </div>
-              <div>
-                <p class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Total Roster</p>
-                <p class="text-sm font-mono font-bold text-white">10 Luminaries</p>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-[#4ade80]/10 border border-[#4ade80]/20 flex items-center justify-center text-[#4ade80]">
-                <span class="material-symbols-outlined text-[18px]">bolt</span>
-              </div>
-              <div>
-                <p class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Active At Desk</p>
-                <p class="text-sm font-mono font-bold text-[#4ade80]" id="office-hud-active">-- Working</p>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-[#4cd7f6]/10 border border-[#4cd7f6]/20 flex items-center justify-center text-[#4cd7f6]">
-                <span class="material-symbols-outlined text-[18px]">coffee</span>
-              </div>
-              <div>
-                <p class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Lounge / Idle</p>
-                <p class="text-sm font-mono font-bold text-[#4cd7f6]" id="office-hud-idle">-- Relaxed</p>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-[#facc15]/10 border border-[#facc15]/20 flex items-center justify-center text-[#facc15]">
-                <span class="material-symbols-outlined text-[18px]">task_alt</span>
-              </div>
-              <div>
-                <p class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Active Dispatches</p>
-                <p class="text-sm font-mono font-bold text-white" id="office-hud-tasks">-- Live Tasks</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Main Canvas Card Container -->
-          <div class="bg-[#0a0e17] border border-[#262a34] rounded-xl overflow-hidden shadow-2xl relative">
-            <!-- Canvas Container where Pixi attaches -->
-            <div id="office-canvas-wrapper" class="w-full relative min-h-[580px] sm:min-h-[660px] lg:min-h-[720px] flex items-center justify-center bg-[#0a0e17] select-none">
-              <!-- Loading fallback / placeholder before Pixi init -->
-              <div id="office-canvas-loader" class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-400 font-mono text-xs z-10 bg-[#0a0e17]">
-                <span class="material-symbols-outlined text-[#8083ff] text-[36px] animate-spin">sync</span>
-                <span>Initializing PixiJS Office Engine &amp; Loading Sprites...</span>
-              </div>
-              <div id="office-pixi-mount" class="w-full h-full flex items-center justify-center"></div>
-            </div>
-
-            <!-- Floor Legend & Zone Map Strip -->
-            <div class="p-3 bg-[#111622] border-t border-[#262a34] flex flex-wrap items-center justify-between gap-3 text-[11px] font-mono">
-              <div class="flex items-center gap-4 flex-wrap">
-                <span class="text-slate-400 font-semibold uppercase tracking-wider">Zones:</span>
-                <span class="inline-flex items-center gap-1.5 text-slate-300">
-                  <span class="w-2 h-2 rounded-full bg-[#8083ff]"></span>
-                  Center Stage (Spidey Core)
-                </span>
-                <span class="inline-flex items-center gap-1.5 text-slate-300">
-                  <span class="w-2 h-2 rounded-full bg-[#38bdf8]"></span>
-                  West Pod (Dev &amp; Systems: Zephyr, Daemon, Iris, Aegis)
-                </span>
-                <span class="inline-flex items-center gap-1.5 text-slate-300">
-                  <span class="w-2 h-2 rounded-full bg-[#a78bfa]"></span>
-                  East Pod (Intelligence: Sage, Athena, Nacht, Ariadne)
-                </span>
-                <span class="inline-flex items-center gap-1.5 text-slate-300">
-                  <span class="w-2 h-2 rounded-full bg-[#fbbf24]"></span>
-                  North Pod (Chronos &amp; Strategy Board)
-                </span>
-                <span class="inline-flex items-center gap-1.5 text-slate-300">
-                  <span class="w-2 h-2 rounded-full bg-[#4ade80]"></span>
-                  Lounge (Coffee &amp; Watercooler)
-                </span>
-              </div>
-              <div class="text-slate-400 flex items-center gap-2">
-                <span class="material-symbols-outlined text-[14px]">touch_app</span>
-                <span>Click any Luminary to inspect node &amp; telemetry</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
       </main>
 
     </div>
@@ -921,10 +780,6 @@
       </div>
     </div>
   </div>
-
-  <!-- PixiJS 2D Canvas Engine for Sovereign Office View -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.2/pixi.min.js"></script>
-  <script>window.PIXI || document.write('<script src="pixi.min.js"><\/script>')</script>
 
   <!-- Main JavaScript Controller -->
   <script src="app.js?v=20261025-neural-canvas"></script>
